@@ -1,6 +1,13 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NeuroSense — Worksheet Overlay</title><style>
 :root{font-family:Arial,sans-serif;color:#172033;background:#e9edf2}*{box-sizing:border-box}body{margin:0}.top{background:#fff;padding:13px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #cbd5e1}.brand{font-weight:800;font-size:19px;margin-right:auto}.muted{color:#64748b;font-size:12px}.status{font-size:13px}.actions{display:flex;gap:8px;flex-wrap:wrap}button,select{background:white;border:1px solid #cbd5e1;border-radius:7px;padding:9px 12px;cursor:pointer;font:inherit}button:hover{background:#eef4ff}.primary{background:#1d4ed8;color:white;border-color:#1d4ed8}.primary:hover{background:#1e40af}.layout{padding:15px;max-width:1600px;margin:auto}.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;background:white;padding:11px;border-radius:10px}.toolbar strong{color:#1d4ed8}.sheet-scroll{overflow:auto;background:#cbd5e1;padding:12px;border-radius:12px}.sheet{position:relative;width:1311px;height:858px;background:white;box-shadow:0 3px 14px #0002}.sheet>img{width:100%;height:100%;display:block;pointer-events:none}.score{position:absolute;display:flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:0;font-family:'Comic Sans MS','Segoe Print',cursive;font-size:17px;font-weight:700;color:#162c54;cursor:pointer;padding:0}.score:hover{background:#bfdbfe80;outline:2px solid #93c5fd;outline-offset:-2px}.score.active{background:#60a5fa40;outline:3px solid #2563eb;outline-offset:-2px;z-index:2}.score.filled:not(.active){background:#ffffff08}.score:focus-visible{outline:3px solid #2563eb}.bottom{margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:white;border-radius:10px;padding:12px}.big{font-size:20px;font-weight:800;min-width:42px}.foot{color:#64748b;font-size:12px;margin-top:10px}.chip{background:#dbeafe;padding:7px 10px;border-radius:7px;font-weight:700}#connection{color:#475569}@media(max-width:700px){.layout{padding:8px}.sheet-scroll{padding:5px}.brand{width:100%}}
 
+/* Patient metadata fields overlaid on the top-right worksheet header lines */
+.meta-input{position:absolute;background:transparent;border:0;border-bottom:1px dashed transparent;font-family:'Segoe Print','Comic Sans MS',cursive;font-size:14px;font-weight:700;color:#162c54;padding:0 4px;z-index:2}
+.meta-input:hover,.meta-input:focus{background:#eff6ff90;border-bottom-color:#2563eb;outline:none}
+.save-badge{font-size:12px;padding:5px 9px;border-radius:6px;background:#f1f5f9;color:#475569;font-weight:600}
+.save-badge.ok{background:#dcfce7;color:#166534}
+.save-badge.warn{background:#fef9c3;color:#854d0e}
+
 /* SVG follows the same 1311x858 coordinate system as the worksheet */
 .dermatome-map{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
 .dermatome-region{fill:#3b82f6;fill-opacity:.23;stroke:#1263d8;stroke-width:2.5;stroke-linejoin:round;vector-effect:non-scaling-stroke}
@@ -9,8 +16,8 @@
 .total{position:absolute;display:flex;justify-content:center;align-items:center;font:bold 15px 'Segoe Print',cursive;color:#153a65;pointer-events:none;z-index:2}
 .total.na{font:11px Arial,sans-serif;color:#64748b}
 .legend{font-size:12px;color:#475569}
-@media print{.top,.toolbar,.bottom,.foot,.legend{display:none!important}.layout{padding:0}.sheet-scroll{overflow:visible;padding:0;background:none}.sheet{box-shadow:none}body{background:white}.score.active{outline:none;background:none}.dermatome-map{display:none!important}}
-</style></head><body><header class="top"><div class="brand">NeuroSense <span class="muted">Sensory examination</span></div><div class="actions"><button id="connect">Connect USB device</button><button id="csv">Export CSV</button><button id="print">Print worksheet</button><button id="undo">Undo</button><button id="reset">Clear scores</button></div><span id="connection" class="status">Keyboard simulation ready</span></header><main class="layout"><section class="toolbar"><span>Selected: <strong id="selection">Right · C2 · Light Touch</strong></span><span class="chip" id="progress">0 / 112</span><label><input type="checkbox" id="advance" checked> Auto-advance</label><label><input type="checkbox" id="showMap" checked> Highlight dermatome</label><label>Outline tool <select id="outlineMode"><option value="view">View only</option><option value="move">Move selected region</option><option value="point">Move testing dot</option><option value="edit">Edit corners</option><option value="draw">Draw new region</option></select></label><label>Region <select id="regionSelect"></select></label><button id="deleteRegion" type="button">Delete region</button><button id="finishOutline" type="button">Finish drawing</button><button id="undoVertex" type="button">Undo point</button><button id="resetPosition" type="button">Reset this region</button><button id="exportOutlines" type="button">Export outlines</button><button id="importOutlines" type="button">Import outlines</button><input id="outlineFile" type="file" accept="application/json,.json" hidden><label>Testing order <select id="order"><option value="lt" selected>All Light Touch → All Pin Prick</option><option value="columns">Complete each column</option><option value="row">Right LT → Right PP → Left LT → Left PP per level</option><option value="pp">Pin prick first</option></select></label></section><div class="sheet-scroll"><div class="sheet" id="sheet"><img src="worksheet.png" alt="User-provided ASIA ISNCSCI worksheet with interactive sensory score boxes"></div></div><section class="bottom"><span>Record score:</span><button class="big" data-value="0">0</button><button class="big" data-value="1">1</button><button class="big" data-value="2">2</button><button data-value="NT">NT</button><button id="prev">← Previous</button><button id="next">Next →</button><span class="muted">Click a box to retest; keyboard 0/1/2, N for NT, arrows to navigate.</span></section><p class="hint" id="outlineHint">Select a sensory cell, then choose Draw new region to click around the matching anatomy. Finish drawing closes the polygon. Edit corners lets you drag vertices; double-click an edge to add a vertex, or right-click a vertex to remove it. Draw new region adds another separate area to the selected dermatome. Use Region to choose which area to move or reshape. Move testing dot lets you drag the blue dot independently. All changes save automatically.</p><p class="legend">Outlines are user-editable visual annotations, not verified clinical dermatome boundaries. Numeric totals appear after all required entries are numeric.</p><p class="foot">Prototype for engineering evaluation only. The worksheet background is your supplied image. Scores are stored locally in this browser; avoid real patient identifiers. USB serial requires Chrome/Edge on localhost or HTTPS. No clinical scoring/classification is calculated.</p></main><script>
+@media print{.top,.toolbar,.bottom,.foot,.legend{display:none!important}.layout{padding:0}.sheet-scroll{overflow:visible;padding:0;background:none}.sheet{box-shadow:none}body{background:white}.score.active{outline:none;background:none}.dermatome-map{display:none!important}.meta-input{border:0!important;background:transparent!important}}
+</style></head><body><header class="top"><div class="brand">NeuroSense <span class="muted">Sensory examination</span></div><div class="actions"><button id="connect" class="primary">Connect USB device</button><button id="saveSession">Save backup</button><button id="loadSession">Load backup</button><input id="sessionFile" type="file" accept="application/json,.json" hidden><button id="csv">Export CSV</button><button id="print">Print worksheet</button><button id="undo">Undo</button><button id="reset">Clear scores</button></div><span id="saveStatus" class="save-badge">Auto-save ready</span><span id="connection" class="status">Keyboard simulation ready</span></header><main class="layout"><section class="toolbar"><span>Selected: <strong id="selection">Right · C2 · Light Touch</strong></span><span class="chip" id="progress">0 / 112</span><label><input type="checkbox" id="advance" checked> Auto-advance</label><label><input type="checkbox" id="showMap" checked> Highlight dermatome</label><label>Outline tool <select id="outlineMode"><option value="view">View only</option><option value="move">Move selected region</option><option value="point">Move testing dot</option><option value="edit">Edit corners</option><option value="draw">Draw new region</option></select></label><label>Region <select id="regionSelect"></select></label><button id="deleteRegion" type="button">Delete region</button><button id="finishOutline" type="button">Finish drawing</button><button id="undoVertex" type="button">Undo point</button><button id="resetPosition" type="button">Reset this region</button><button id="exportOutlines" type="button">Export outlines</button><button id="importOutlines" type="button">Import outlines</button><input id="outlineFile" type="file" accept="application/json,.json" hidden><label>Testing order <select id="order"><option value="lt" selected>All Light Touch → All Pin Prick</option><option value="columns">Complete each column</option><option value="row">Right LT → Right PP → Left LT → Left PP per level</option><option value="pp">Pin prick first</option></select></label></section><div class="sheet-scroll"><div class="sheet" id="sheet"><img src="worksheet.png" onerror="if(this.src.endsWith('worksheet.png'))this.src='worksheet.jpg'" alt="User-provided ASIA ISNCSCI worksheet with interactive sensory score boxes"><input id="patientName" class="meta-input" style="left:735px;top:0px;width:240px;height:20px" placeholder="Patient Name / ID" aria-label="Patient Name"><input id="examDate" class="meta-input" style="left:1095px;top:0px;width:185px;height:20px" placeholder="Date / Time" aria-label="Date and Time of Exam"><input id="examinerName" class="meta-input" style="left:750px;top:27px;width:225px;height:22px" placeholder="Examiner Name" aria-label="Examiner Name"></div></div><section class="bottom"><span>Record score:</span><button class="big" data-value="0">0</button><button class="big" data-value="1">1</button><button class="big" data-value="2">2</button><button data-value="NT">NT</button><button id="prev">← Previous</button><button id="next">Next →</button><span class="muted">Click a box to retest; keyboard 0/1/2, N for NT, Backspace/Z to Undo, arrows to navigate.</span></section><p class="hint" id="outlineHint">Select a sensory cell, then choose Draw new region to click around the matching anatomy. Finish drawing closes the polygon. Edit corners lets you drag vertices; double-click an edge to add a vertex, or right-click a vertex to remove it. Draw new region adds another separate area to the selected dermatome. Use Region to choose which area to move or reshape. Move testing dot lets you drag the blue dot independently. All changes save automatically.</p><p class="legend">Outlines are user-editable visual annotations, not verified clinical dermatome boundaries. Numeric totals appear after all required entries are numeric.</p><p class="foot">Prototype for engineering evaluation only. The worksheet background is your supplied image. Scores are stored locally in this browser and backed up when run via the local launcher; avoid real patient identifiers. USB serial requires Chrome/Edge on localhost or HTTPS. No clinical scoring/classification is calculated.</p></main><script>
 const levels=['C2','C3','C4','C5','C6','C7','C8','T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12','L1','L2','L3','L4','L5','S1','S2','S3','S4-5'];
 // Cell centers measured against the 1311 × 858 uploaded worksheet screenshot.
 const ys=[137,159,180,201,223,245,267,289,310,332,354,376,398,420,442,463,485,507,529,549,571,593,615,637,658,680,701,723];
@@ -60,9 +67,10 @@ const totals=[{id:'R-LT',x:408,y:754,w:57},{id:'R-PP',x:483,y:754,w:58},{id:'L-L
 const totalNodes={};totals.forEach(t=>{const e=document.createElement('div');e.className='total';e.style.cssText=`left:${t.x-t.w/2}px;top:${t.y-11}px;width:${t.w}px;height:22px`;e.title=t.id+' sensory subtotal';totalNodes[t.id]=e;document.getElementById('sheet').appendChild(e)});
 function subtotal(id){const vals=levels.map(l=>scores[id+'-'+l]);return vals.every(v=>v==='0'||v==='1'||v==='2')?vals.reduce((a,v)=>a+Number(v),0):null}
 function renderTotals(){const v={};for(const c of columns)v[c.id]=subtotal(c.id);v['LT-R']=v['R-LT'];v['LT-L']=v['L-LT'];v['PP-R']=v['R-PP'];v['PP-L']=v['L-PP'];v['LT-T']=v['LT-R']!==null&&v['LT-L']!==null?v['LT-R']+v['LT-L']:null;v['PP-T']=v['PP-R']!==null&&v['PP-L']!==null?v['PP-R']+v['PP-L']:null;for(const [k,e] of Object.entries(totalNodes)){e.textContent=v[k]===null?'':v[k];e.title=v[k]===null?'Complete all 28 numeric scores on each required side to calculate':'Sensory total '+v[k]}}
-const NS2=NS;
+
 const outlineStorage='neurosense-multi-regions-v2';
 const dotStorage='neurosense-test-dots-v2';
+const sessionStorageKey='neurosense-full-session-v1';
 let regions={}, dots={};
 function validPolygon(p){return Array.isArray(p)&&p.length>=3&&p.length<=300&&p.every(a=>Array.isArray(a)&&a.length===2&&a.every(n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=1311))}
 try{const raw=JSON.parse(localStorage.getItem(outlineStorage)||'{}');for(const l of levels)if(Array.isArray(raw[l]))regions[l]=raw[l].filter(validPolygon)}catch{}
@@ -76,7 +84,7 @@ const modeEl=document.getElementById('outlineMode'),regionSelect=document.getEle
 function saveOutlines(){localStorage.setItem(outlineStorage,JSON.stringify(regions));localStorage.setItem(dotStorage,JSON.stringify(dots))}
 function basePoints(level){return outlines[level].trim().split(/\s+/).map(p=>p.split(',').map(Number))}
 function getRegions(level){return regions[level]??[basePoints(level)]}
-function getPoints(level){return getRegions(level)[Math.min(selectedRegion,getRegions(level).length-1)]}
+function getPoints(level){const r=getRegions(level);return r[Math.min(selectedRegion,r.length-1)]||[]}
 function commitRegions(level){if(!regions[level])regions[level]=getRegions(level).map(p=>p.map(a=>[...a]))}
 function svgPoint(evt){const pt=map.createSVGPoint();pt.x=evt.clientX;pt.y=evt.clientY;const p=pt.matrixTransform(map.getScreenCTM().inverse());return [Math.round(Math.max(0,Math.min(1311,p.x))),Math.round(Math.max(0,Math.min(858,p.y)))]}
 function distanceToSegment(p,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(dx*dx+dy*dy||1)));return Math.hypot(p[0]-(a[0]+t*dx),p[1]-(a[1]+t*dy))}
@@ -107,13 +115,290 @@ document.getElementById('resetPosition').onclick=()=>{const level=cells[active].
 document.getElementById('exportOutlines').onclick=()=>{const blob=new Blob([JSON.stringify({version:2,regions,dots},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='neurosense-dermatome-regions.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 document.getElementById('importOutlines').onclick=()=>document.getElementById('outlineFile').click();
 document.getElementById('outlineFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text()),input=data.regions||data.outlines||data;if(!input||typeof input!=='object'||Array.isArray(input))throw Error('Invalid format');const clean={};for(const [level,raw] of Object.entries(input)){if(!levels.includes(level))throw Error('Unknown level '+level);const arr=validPolygon(raw)?[raw]:raw;if(!Array.isArray(arr)||arr.length>30||!arr.every(validPolygon))throw Error('Invalid regions for '+level);clean[level]=arr}const newDots={};if(data.dots){for(const [l,xy] of Object.entries(data.dots)){if(!levels.includes(l)||!Array.isArray(xy)||xy.length!==2||!xy.every(n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=1311))throw Error('Invalid dot for '+l);newDots[l]=xy}}regions=clean;dots=newDots;selectedRegion=0;saveOutlines();renderMap();alert('Regions and testing dots imported')}catch(err){alert('Could not import: '+err.message)}e.target.value=''};
-const sheet=document.getElementById('sheet'),progress=document.getElementById('progress'),selection=document.getElementById('selection');let scores={};try{scores=JSON.parse(localStorage.getItem('neurosense-overlay-v1')||'{}')}catch{}let active=0,history=[];sheet.appendChild(map);
+
+const sheet=document.getElementById('sheet'),progress=document.getElementById('progress'),selection=document.getElementById('selection'),saveStatusEl=document.getElementById('saveStatus');
+const patientNameEl=document.getElementById('patientName'),examinerNameEl=document.getElementById('examinerName'),examDateEl=document.getElementById('examDate');
+
+// Keep only known cells with allowed values, and undo entries that point at a real cell.
+function cleanSession(d){
+  const ok=v=>['0','1','2','NT'].includes(v),s={};
+  for(const c of cells){const v=d&&d.scores&&d.scores[c.key];if(ok(v))s[c.key]=v}
+  const h=(d&&Array.isArray(d.history)?d.history:[]).filter(x=>x&&Number.isInteger(x.index)&&x.index>=0&&x.index<cells.length&&x.key===cells[x.index].key&&(x.previous===undefined||ok(x.previous))).slice(-500);
+  return {scores:s,history:h};
+}
+let scores={};try{scores=cleanSession({scores:JSON.parse(localStorage.getItem('neurosense-overlay-v1')||'{}')}).scores}catch{}
+let active=0,history=[];
+sheet.appendChild(map);
+
+// Restore full state from localStorage on initial load
+try{
+  const saved=JSON.parse(localStorage.getItem(sessionStorageKey)||'null');
+  if(saved&&typeof saved==='object'){
+    if(saved.scores&&typeof saved.scores==='object'){const c=cleanSession(saved);scores=c.scores;history=c.history}
+    if(Number.isInteger(saved.active)&&saved.active>=0&&saved.active<cells.length)active=saved.active;
+    if(['lt','columns','row','pp'].includes(saved.order))document.getElementById('order').value=saved.order;
+    if(saved.patient){
+      patientNameEl.value=saved.patient.patientName||'';
+      examinerNameEl.value=saved.patient.examinerName||'';
+      examDateEl.value=saved.patient.examDate||'';
+    }
+  }
+}catch{}
+
+function getPatientMeta(){
+  return {
+    patientName:patientNameEl.value.trim(),
+    examinerName:examinerNameEl.value.trim(),
+    examDate:examDateEl.value.trim()
+  };
+}
+
+function buildSessionPayload(){
+  return {
+    version:1,
+    sessionId:localStorage.getItem('ns-sid')||'',
+    timestamp:new Date().toISOString(),
+    patient:getPatientMeta(),
+    active,
+    order:document.getElementById('order').value,
+    scores,
+    history
+  };
+}
+
+function applySessionPayload(data){
+  if(!data||typeof data!=='object')return;
+  if(data.scores&&typeof data.scores==='object'){const c=cleanSession(data);scores=c.scores;history=c.history}
+  if(Number.isInteger(data.active)&&data.active>=0&&data.active<cells.length)active=data.active;
+  if(data.order&&['lt','columns','row','pp'].includes(data.order))document.getElementById('order').value=data.order;
+  if(data.patient){
+    patientNameEl.value=data.patient.patientName||'';
+    examinerNameEl.value=data.patient.examinerName||'';
+    examDateEl.value=data.patient.examDate||'';
+  }
+  render(false);
+}
+
+// One /api/save in flight at a time; a request made meanwhile just re-sends the latest state afterwards,
+// so responses can never arrive out of order and write stale data.
+let saving=false,dirty=false,lastDisk=false;
+async function pushDisk(){
+  if(saving){dirty=true;return lastDisk}
+  saving=true;
+  try{
+    do{
+      dirty=false;
+      const res=await fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(buildSessionPayload())});
+      lastDisk=res.ok;
+    }while(dirty);
+  }catch{lastDisk=false}
+  saving=false;
+  return lastDisk;
+}
+
+async function persistSession(isManual=false){
+  const payload=buildSessionPayload();
+  // 1. Always save to browser localStorage (both legacy key and full session key)
+  localStorage.setItem('neurosense-overlay-v1',JSON.stringify(scores));
+  localStorage.setItem(sessionStorageKey,JSON.stringify(payload));
+  const timeStr=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  // 2. Attempt to auto-save to Python local backup server if running
+  let diskSaved=false;
+  if(location.protocol.startsWith('http'))diskSaved=await pushDisk();
+
+  if(diskSaved){
+    saveStatusEl.textContent='Disk & browser saved · '+timeStr;
+    saveStatusEl.className='save-badge ok';
+  }else{
+    saveStatusEl.textContent='Browser auto-saved · '+timeStr;
+    saveStatusEl.className='save-badge';
+  }
+
+  // 3. If Manual Save button clicked, download a timestamped JSON backup file
+  if(isManual){
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    const safeName=(payload.patient.patientName||'patient').replace(/[^a-z0-9-_]/gi,'_');
+    a.href=url;
+    a.download=`neurosense-backup-${safeName}.json`;
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+}
+
+// Sync with Python launcher session on startup if available
+async function syncWithServerSession(){
+  if(!location.protocol.startsWith('http'))return;
+  try{
+    const res=await fetch('/api/session');
+    if(!res.ok)return;
+    const serverData=await res.json();
+    if(serverData&&typeof serverData==='object'){
+      // A different session id means the launcher started a new exam: the server wins (even if blank).
+      // Same session: keep whichever copy is newer, so progress made while the server was down survives.
+      const sid=serverData.sessionId||'';
+      let mine={};try{mine=JSON.parse(localStorage.getItem(sessionStorageKey)||'{}')||{}}catch{}
+      const sameSession=sid!==''&&sid===localStorage.getItem('ns-sid');
+      localStorage.setItem('ns-sid',sid);
+      if(!sameSession||!(mine.timestamp>serverData.timestamp))applySessionPayload(serverData);
+      persistSession(false);
+    }
+  }catch{}
+}
+
+// Auto-load calibrated regions from neurosense-dermatome-regions.json if localStorage is empty
+async function loadDefaultRegionsIfNeeded(){
+  if(Object.keys(regions).length>0||!location.protocol.startsWith('http'))return;
+  try{
+    const res=await fetch('neurosense-dermatome-regions.json');
+    if(!res.ok)return;
+    const data=await res.json();
+    if(data&&data.regions){
+      for(const [l,arr] of Object.entries(data.regions)){
+        if(levels.includes(l)&&Array.isArray(arr)&&arr.every(validPolygon))regions[l]=arr;
+      }
+      if(data.dots){
+        for(const [l,xy] of Object.entries(data.dots)){
+          if(levels.includes(l)&&Array.isArray(xy)&&xy.length===2)dots[l]=xy;
+        }
+      }
+      saveOutlines();
+      renderMap();
+    }
+  }catch{}
+}
+
+[patientNameEl,examinerNameEl,examDateEl].forEach(el=>el.addEventListener('input',()=>persistSession(false)));
+document.getElementById('saveSession').onclick=()=>persistSession(true);
+document.getElementById('loadSession').onclick=()=>document.getElementById('sessionFile').click();
+document.getElementById('sessionFile').onchange=async e=>{
+  const file=e.target.files[0];if(!file)return;
+  try{
+    const data=JSON.parse(await file.text());
+    if(!data||typeof data!=='object'||!data.scores)throw Error('Invalid session backup file');
+    applySessionPayload(data);
+    persistSession(false);
+  }catch(err){alert('Could not load backup: '+err.message)}
+  e.target.value='';
+};
+
 function sequence(){const mode=document.getElementById('order').value;if(mode==='row')return levels.flatMap((_,i)=>[0,1,2,3].map(c=>c*28+i));if(mode==='pp')return [1,3,0,2].flatMap(c=>levels.map((_,i)=>c*28+i));if(mode==='lt')return [0,2,1,3].flatMap(c=>levels.map((_,i)=>c*28+i));return cells.map((_,i)=>i)}
-function render(){document.querySelectorAll('.score').forEach((el,i)=>{el.textContent=scores[cells[i].key]??'';el.classList.toggle('active',i===active);el.setAttribute('aria-label',columns[cells[i].col].label+' '+cells[i].level+' score '+(scores[cells[i].key]??'blank'))});const c=cells[active];selection.textContent=columns[c.col].label+' · '+c.level;progress.textContent=Object.keys(scores).filter(k=>cells.some(c=>c.key===k)).length+' / 112';localStorage.setItem('neurosense-overlay-v1',JSON.stringify(scores));renderMap();renderTotals()}
-function select(i){if(cells[i].level!==cells[active].level){selectedRegion=0;draft=[]}active=i;render()}function next(delta=1){const s=sequence(),p=s.indexOf(active);select(s[(p+delta+s.length)%s.length])}function record(value){const c=cells[active];history.push({key:c.key,previous:scores[c.key],index:active});scores[c.key]=String(value);if(document.getElementById('advance').checked){const s=sequence(),p=s.indexOf(active);const nxt=s.slice(p+1).concat(s.slice(0,p+1)).find(i=>scores[cells[i].key]===undefined);if(nxt!==undefined)active=nxt;}render()}
+function render(shouldSave=true){document.querySelectorAll('.score').forEach((el,i)=>{el.textContent=scores[cells[i].key]??'';el.classList.toggle('active',i===active);el.setAttribute('aria-label',columns[cells[i].col].label+' '+cells[i].level+' score '+(scores[cells[i].key]??'blank'))});const c=cells[active];selection.textContent=columns[c.col].label+' · '+c.level;progress.textContent=Object.keys(scores).filter(k=>cells.some(c=>c.key===k)).length+' / 112';renderMap();renderTotals();if(shouldSave)persistSession(false)}
+function select(i){if(cells[i].level!==cells[active].level){selectedRegion=0;draft=[]}active=i;render()}
+function next(delta=1){const s=sequence(),p=s.indexOf(active);select(s[(p+delta+s.length)%s.length])}
+function record(value){const c=cells[active];history.push({key:c.key,previous:scores[c.key],index:active});scores[c.key]=String(value);if(document.getElementById('advance').checked){const s=sequence(),p=s.indexOf(active);const nxt=s.slice(p+1).concat(s.slice(0,p+1)).find(i=>scores[cells[i].key]===undefined);if(nxt!==undefined){if(cells[nxt].level!==c.level){selectedRegion=0;draft=[]}active=nxt}}render()}
+function undoLast(){const h=history.pop();if(!h||!cells[h.index])return;if(h.previous===undefined)delete scores[h.key];else scores[h.key]=h.previous;select(h.index)}
+
 cells.forEach((c,i)=>{const b=document.createElement('button');b.type='button';b.className='score';b.style.left=(c.x-c.w/2)+'px';b.style.top=(c.y-c.h/2)+'px';b.style.width=c.w+'px';b.style.height=c.h+'px';b.addEventListener('click',()=>select(i));sheet.appendChild(b)});
-document.querySelectorAll('[data-value]').forEach(b=>b.onclick=()=>record(b.dataset.value));document.getElementById('prev').onclick=()=>next(-1);document.getElementById('next').onclick=()=>next(1);document.getElementById('order').onchange=render;document.getElementById('undo').onclick=()=>{const h=history.pop();if(!h)return;if(h.previous===undefined)delete scores[h.key];else scores[h.key]=h.previous;select(h.index)};document.getElementById('reset').onclick=()=>{if(confirm('Clear all 112 sensory scores?')){scores={};history=[];select(0)}};
-document.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;if(['0','1','2'].includes(e.key)){record(e.key);e.preventDefault()}else if(e.key.toLowerCase()==='n'){record('NT');e.preventDefault()}else if(e.key==='ArrowRight'){next(1);e.preventDefault()}else if(e.key==='ArrowLeft'){next(-1);e.preventDefault()}});
-document.getElementById('showMap').onchange=renderMap;document.getElementById('print').onclick=()=>window.print();document.getElementById('csv').onclick=()=>{const rows=[['Level','Right LT','Right PP','Left LT','Left PP'],...levels.map(l=>[l,...columns.map(c=>scores[c.id+'-'+l]??'')])];const csv=rows.map(r=>r.map(x=>'"'+String(x).replaceAll('"','""')+'"').join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));const a=document.createElement('a');a.href=url;a.download='neurosense-sensory.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
-let port,reader;document.getElementById('connect').onclick=async()=>{const status=document.getElementById('connection');if(!('serial' in navigator)){status.textContent='Web Serial unavailable: use Chrome/Edge on localhost or HTTPS';return}try{port=await navigator.serial.requestPort();await port.open({baudRate:115200});status.textContent='USB connected';const decoder=new TextDecoder();reader=port.readable.getReader();let buffer='';while(true){const {value,done}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});let idx;while((idx=buffer.indexOf('\n'))>=0){const msg=buffer.slice(0,idx).trim();buffer=buffer.slice(idx+1);const match=msg.match(/^(?:SCORE\s*[:=]\s*)?([012])$/i);if(match)record(match[1])}}}catch(err){status.textContent='USB: '+err.message}finally{try{reader?.releaseLock()}catch{}status.textContent='USB disconnected'}};render();
+document.querySelectorAll('[data-value]').forEach(b=>b.onclick=()=>record(b.dataset.value));
+document.getElementById('prev').onclick=()=>next(-1);
+document.getElementById('next').onclick=()=>next(1);
+document.getElementById('order').onchange=()=>render();
+document.getElementById('undo').onclick=undoLast;
+document.getElementById('reset').onclick=()=>{if(confirm('Clear all 112 sensory scores?')){scores={};history=[];select(0)}};
+
+document.addEventListener('keydown',e=>{
+  if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;
+  if(e.ctrlKey||e.metaKey||e.altKey||(e.repeat&&!e.key.startsWith('Arrow')))return; // no held-key floods or browser shortcuts
+  if(['0','1','2'].includes(e.key)){record(e.key);e.preventDefault()}
+  else if(e.key.toLowerCase()==='n'){record('NT');e.preventDefault()}
+  else if(e.key==='Backspace'||e.key.toLowerCase()==='z'){undoLast();e.preventDefault()}
+  else if(e.key==='ArrowRight'){next(1);e.preventDefault()}
+  else if(e.key==='ArrowLeft'){next(-1);e.preventDefault()}
+});
+
+document.getElementById('showMap').onchange=()=>renderMap();
+document.getElementById('print').onclick=()=>window.print();
+document.getElementById('csv').onclick=()=>{
+  const meta=getPatientMeta();
+  const rows=[
+    ['Patient Name / ID',meta.patientName,'Examiner',meta.examinerName,'Date',meta.examDate],
+    [],
+    ['Level','Right LT','Right PP','Left LT','Left PP'],
+    ...levels.map(l=>[l,...columns.map(c=>scores[c.id+'-'+l]??'')])
+  ];
+  const csv=rows.map(r=>r.map(x=>'"'+String(x??'').replaceAll('"','""')+'"').join(',')).join('\r\n');
+  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  const a=document.createElement('a');
+  const safeName=(meta.patientName||'sensory').replace(/[^a-z0-9-_]/gi,'_');
+  a.href=url;a.download=`neurosense-${safeName}.csv`;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+
+// Web Serial API connection + 4-button support (0, 1, 2, UNDO/DEL) + Auto-reconnect on USB replug
+let isReadingSerial=false;
+async function openSerialPort(port){
+  const status=document.getElementById('connection');
+  if(isReadingSerial)return;
+  isReadingSerial=true; // claim before any await so a second call can't clobber this one
+  let reader,endMsg='USB disconnected (plug back in to auto-resume)';
+  try{
+    // Windows often still holds the COM port for a moment after a replug
+    for(let tries=1;;tries++){
+      try{await port.open({baudRate:115200});break}
+      catch(err){if(tries>=5)throw err;status.textContent='USB: waiting for port…';await new Promise(r=>setTimeout(r,500))}
+    }
+    status.textContent='USB connected';
+    const decoder=new TextDecoder();
+    reader=port.readable.getReader();
+    let buffer='';
+    while(true){
+      const {value,done}=await reader.read();
+      if(done)break;
+      buffer+=decoder.decode(value,{stream:true});
+      if(buffer.length>256&&buffer.indexOf('\n')<0)buffer=''; // line noise with no newline
+      let idx;
+      while((idx=buffer.indexOf('\n'))>=0){
+        const msg=buffer.slice(0,idx).trim();
+        buffer=buffer.slice(idx+1);
+        const match=msg.match(/^(?:SCORE\s*[:=]\s*|BTN\s*[:=]\s*)?([012]|UNDO|DEL|DELETE)$/i);
+        if(match){
+          const cmd=match[1].toUpperCase();
+          if(cmd==='UNDO'||cmd==='DEL'||cmd==='DELETE')undoLast();
+          else record(cmd);
+        }
+      }
+    }
+  }catch(err){
+    endMsg='USB: '+err.message+' (plug back in to retry)';
+  }finally{
+    try{reader?.releaseLock()}catch{}
+    try{await port.close()}catch{}
+    isReadingSerial=false;
+    status.textContent=endMsg;
+  }
+}
+
+document.getElementById('connect').onclick=async()=>{
+  const status=document.getElementById('connection');
+  if(!('serial' in navigator)){
+    status.textContent='Web Serial unavailable: use Chrome/Edge on localhost or HTTPS';
+    return;
+  }
+  try{
+    const selectedPort=await navigator.serial.requestPort();
+    await openSerialPort(selectedPort);
+  }catch(err){
+    status.textContent='USB: '+err.message;
+  }
+};
+
+// Auto-connect to previously authorized Arduino on page load or when USB cable is plugged back in
+if('serial' in navigator){
+  navigator.serial.addEventListener('connect',async e=>{
+    if(!isReadingSerial&&e.target){
+      await openSerialPort(e.target);
+    }
+  });
+  navigator.serial.getPorts().then(ports=>{
+    if(ports.length>0&&!isReadingSerial){
+      openSerialPort(ports[0]);
+    }
+  }).catch(()=>{});
+}
+
+render(false);
+syncWithServerSession();
+loadDefaultRegionsIfNeeded();
 </script></body></html>

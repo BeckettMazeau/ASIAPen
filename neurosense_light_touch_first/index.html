@@ -1,23 +1,279 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NeuroSense — Worksheet Overlay</title><style>
-:root{font-family:Arial,sans-serif;color:#172033;background:#e9edf2}*{box-sizing:border-box}body{margin:0}.top{background:#fff;padding:13px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #cbd5e1}.brand{font-weight:800;font-size:19px;margin-right:auto}.muted{color:#64748b;font-size:12px}.status{font-size:13px}.actions{display:flex;gap:8px;flex-wrap:wrap}button,select{background:white;border:1px solid #cbd5e1;border-radius:7px;padding:9px 12px;cursor:pointer;font:inherit}button:hover{background:#eef4ff}.primary{background:#1d4ed8;color:white;border-color:#1d4ed8}.primary:hover{background:#1e40af}.layout{padding:15px;max-width:1600px;margin:auto}.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;background:white;padding:11px;border-radius:10px}.toolbar strong{color:#1d4ed8}.sheet-scroll{overflow:auto;background:#cbd5e1;padding:12px;border-radius:12px}.sheet{position:relative;width:1311px;height:858px;background:white;box-shadow:0 3px 14px #0002}.sheet>img{width:100%;height:100%;display:block;pointer-events:none}.score{position:absolute;display:flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:0;font-family:'Comic Sans MS','Segoe Print',cursive;font-size:17px;font-weight:700;color:#162c54;cursor:pointer;padding:0}.score:hover{background:#bfdbfe80;outline:2px solid #93c5fd;outline-offset:-2px}.score.active{background:#60a5fa40;outline:3px solid #2563eb;outline-offset:-2px;z-index:2}.score.filled:not(.active){background:#ffffff08}.score:focus-visible{outline:3px solid #2563eb}.bottom{margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:white;border-radius:10px;padding:12px}.big{font-size:20px;font-weight:800;min-width:42px}.foot{color:#64748b;font-size:12px;margin-top:10px}.chip{background:#dbeafe;padding:7px 10px;border-radius:7px;font-weight:700}#connection{color:#475569}@media(max-width:700px){.layout{padding:8px}.sheet-scroll{padding:5px}.brand{width:100%}}
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NeuroSense</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f3a66'/%3E%3Cpath d='M9 7v18M16 5v22M23 7v18' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23e879f9'/%3E%3C/svg%3E">
+<style>
+:root{--ink:#0f172a;--muted:#5b6b80;--line:#d5dce6;--bg:#e6ebf1;--surface:#fff;--brand:#0f3a66;--brand-2:#174f88;--accent:#c026d3;--accent-ink:#86198f;--ok:#15803d;--warn:#b45309;--bad:#b91c1c;
+ --s0:#dc2626;--s0-on:#fff;--s1:#f59e0b;--s1-on:#1c1300;--s2:#16a34a;--s2-on:#fff;--snt:#64748b;--snt-on:#fff;--score-fs:18px;
+ font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+:root[data-palette="cb"]{--s0:#d55e00;--s1:#f0e442;--s1-on:#1a1a1a;--s2:#0072b2;--snt:#6b7280}
+:root[data-size="large"]{--score-fs:22px}
+*{box-sizing:border-box}body{margin:0;height:100vh;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+.btn{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 13px;font-weight:600}
+.btn:hover{background:#eef3fa}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}.btn.primary:hover{background:var(--brand-2)}
+.btn:disabled{opacity:.5;cursor:default}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-/* Patient metadata fields overlaid on the top-right worksheet header lines */
-.meta-input{position:absolute;background:transparent;border:0;border-bottom:1px dashed transparent;font-family:'Segoe Print','Comic Sans MS',cursive;font-size:14px;font-weight:700;color:#162c54;padding:0 4px;z-index:2}
-.meta-input:hover,.meta-input:focus{background:#eff6ff90;border-bottom-color:#2563eb;outline:none}
-.save-badge{font-size:12px;padding:5px 9px;border-radius:6px;background:#f1f5f9;color:#475569;font-weight:600}
-.save-badge.ok{background:#dcfce7;color:#166534}
-.save-badge.warn{background:#fef9c3;color:#854d0e}
+/* Top bar */
+.top{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--brand);color:#fff;flex:none}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:19px;letter-spacing:.2px}
+.brand small{font-weight:500;font-size:12px;opacity:.75;letter-spacing:0}
+.logo{width:28px;height:28px;flex:none}
+.who{margin-left:14px;margin-right:auto;display:flex;gap:16px;font-size:14px;min-width:0;overflow:hidden;white-space:nowrap}
+.who b{font-weight:700}.who span{opacity:.92;text-overflow:ellipsis;overflow:hidden}
+.pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;background:#ffffff1f;border:1px solid #ffffff33;color:#fff;white-space:nowrap}
+.pill .dot{width:10px;height:10px;border-radius:50%;background:#94a3b8;flex:none}
+button.pill:hover{background:#ffffff33}
+.pill[data-state="ok"] .dot{background:#4ade80;box-shadow:0 0 0 3px #4ade8040}
+.pill[data-state="wait"] .dot{background:#fbbf24}
+.pill[data-state="err"] .dot{background:#f87171}
+.pill[data-state="ok"]{cursor:default}
+.save-badge.ok .dot{background:#4ade80}.save-badge.warn .dot{background:#fbbf24}.save-badge.bad{background:#b91c1c;border-color:#fecaca}.save-badge.bad .dot{background:#fff}
+.top .btn{white-space:nowrap;background:#ffffff1f;border-color:#ffffff40;color:#fff}.top .btn:hover{background:#ffffff36}
+.menu-wrap{position:relative}
+.menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 32px #0f172a33;padding:6px;min-width:220px;z-index:45;display:flex;flex-direction:column}
+.menu[hidden]{display:none}
+.menu button{background:none;border:0;text-align:left;padding:9px 12px;border-radius:6px;font-weight:500}
+.menu button:hover{background:#eef3fa}
+.menu hr{border:0;border-top:1px solid var(--line);margin:5px 4px}
+.menu .danger{color:var(--bad)}
 
-/* SVG follows the same 1311x858 coordinate system as the worksheet */
+/* Calibration strip (hidden unless Settings > Calibration mode) */
+.calib{flex:none;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:9px 16px;background:#fdf4ff;border-bottom:1px solid #f0abfc;font-size:13px}
+.calib[hidden]{display:none}
+.calib strong{color:var(--accent-ink)}
+.calib .btn{padding:6px 10px;font-size:13px}
+.calib select{padding:5px 8px;border:1px solid var(--line);border-radius:7px;background:#fff}
+.calib details{flex-basis:100%;color:var(--muted)}
+.calib details p{margin:4px 0}
+
+/* Workspace */
+.workspace{flex:1;min-height:0;display:flex;gap:14px;padding:14px}
+.stage{flex:1;min-width:0;min-height:0;display:flex;justify-content:center;align-items:flex-start}
+.frame{position:relative;overflow:hidden;background:#fff;border-radius:6px;box-shadow:0 4px 18px #0f172a26;flex:none}
+.sheet{position:absolute;left:0;top:0;width:1311px;height:858px;transform-origin:0 0;background:#fff}
+.sheet>img{width:100%;height:100%;display:block;pointer-events:none}
+
+/* Score cells: solid color chip per value, readable from across the room */
+.score{position:absolute;display:flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:3px;font:800 var(--score-fs)/1 "Segoe UI",system-ui,Arial,sans-serif;color:var(--ink);cursor:pointer;padding:0;z-index:2}
+.score:hover{background:#c026d31f;outline:2px solid #e879f9;outline-offset:-2px}
+.score[data-v]{background:var(--cv);color:var(--con);box-shadow:inset 0 0 0 2px #fff}
+.score[data-v="0"]{--cv:var(--s0);--con:var(--s0-on)}.score[data-v="1"]{--cv:var(--s1);--con:var(--s1-on)}.score[data-v="2"]{--cv:var(--s2);--con:var(--s2-on)}.score[data-v="NT"]{--cv:var(--snt);--con:var(--snt-on);font-size:calc(var(--score-fs) - 4px)}
+.score.active{outline:4px solid var(--accent);outline-offset:1px;z-index:4;animation:pulse 1.6s ease-in-out infinite}
+.score:focus-visible{outline:4px solid var(--accent)}
+@keyframes pulse{0%,100%{box-shadow:inset 0 0 0 2px #fff,0 0 0 0 #c026d366}50%{box-shadow:inset 0 0 0 2px #fff,0 0 0 7px #c026d300}}
+.row-band{position:absolute;background:#c026d324;border-top:2px solid #c026d380;border-bottom:2px solid #c026d380;pointer-events:none;z-index:1;transition:top .15s,left .15s}
+.col-mark{position:absolute;height:6px;border-radius:3px;background:var(--accent);pointer-events:none;z-index:3;transition:left .15s}
+.meta-input{position:absolute;background:transparent;border:0;border-bottom:1px dashed transparent;font:700 14px "Segoe UI",system-ui,sans-serif;color:var(--brand);padding:0 4px;z-index:2}
+.meta-input:hover,.meta-input:focus{background:#eff6ffd0;border-bottom-color:var(--brand-2);outline:none}
+.total{position:absolute;display:flex;justify-content:center;align-items:center;font:800 17px "Segoe UI",system-ui,sans-serif;color:var(--brand);pointer-events:none;z-index:2}
+
+/* Dermatome overlay, same 1311x858 coordinate system as the worksheet */
 .dermatome-map{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
-.dermatome-region{fill:#3b82f6;fill-opacity:.23;stroke:#1263d8;stroke-width:2.5;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-.dermatome-map.calibrating{pointer-events:auto;cursor:grab;touch-action:none;z-index:4}.dermatome-map.calibrating:active{cursor:grabbing}.dermatome-dot{fill:#1565d8;stroke:white;stroke-width:1.5;vector-effect:non-scaling-stroke}.edit-handle{fill:#fff;stroke:#0754ca;stroke-width:2.5;cursor:move;vector-effect:non-scaling-stroke}.dermatome-map.drawing{cursor:crosshair}.dermatome-map.editing{cursor:crosshair}.dermatome-map.editing .dermatome-region{cursor:move}.hint{font-size:12px;color:#475569;background:#eff6ff;border:1px solid #bfdbfe;padding:8px 10px;border-radius:8px}
-.score{z-index:2}.score.active{z-index:3}
-.total{position:absolute;display:flex;justify-content:center;align-items:center;font:bold 15px 'Segoe Print',cursive;color:#153a65;pointer-events:none;z-index:2}
-.total.na{font:11px Arial,sans-serif;color:#64748b}
-.legend{font-size:12px;color:#475569}
-@media print{.top,.toolbar,.bottom,.foot,.legend{display:none!important}.layout{padding:0}.sheet-scroll{overflow:visible;padding:0;background:none}.sheet{box-shadow:none}body{background:white}.score.active{outline:none;background:none}.dermatome-map{display:none!important}.meta-input{border:0!important;background:transparent!important}}
-</style></head><body><header class="top"><div class="brand">NeuroSense <span class="muted">Sensory examination</span></div><div class="actions"><button id="connect" class="primary">Connect USB device</button><button id="saveSession">Save backup</button><button id="loadSession">Load backup</button><input id="sessionFile" type="file" accept="application/json,.json" hidden><button id="csv">Export CSV</button><button id="print">Print worksheet</button><button id="undo">Undo</button><button id="reset">Clear scores</button></div><span id="saveStatus" class="save-badge">Auto-save ready</span><span id="connection" class="status">Keyboard simulation ready</span></header><main class="layout"><section class="toolbar"><span>Selected: <strong id="selection">Right · C2 · Light Touch</strong></span><span class="chip" id="progress">0 / 112</span><label><input type="checkbox" id="advance" checked> Auto-advance</label><label><input type="checkbox" id="showMap" checked> Highlight dermatome</label><label>Outline tool <select id="outlineMode"><option value="view">View only</option><option value="move">Move selected region</option><option value="point">Move testing dot</option><option value="edit">Edit corners</option><option value="draw">Draw new region</option></select></label><label>Region <select id="regionSelect"></select></label><button id="deleteRegion" type="button">Delete region</button><button id="finishOutline" type="button">Finish drawing</button><button id="undoVertex" type="button">Undo point</button><button id="resetPosition" type="button">Reset this region</button><button id="exportOutlines" type="button">Export outlines</button><button id="importOutlines" type="button">Import outlines</button><input id="outlineFile" type="file" accept="application/json,.json" hidden><label>Testing order <select id="order"><option value="lt" selected>All Light Touch → All Pin Prick</option><option value="columns">Complete each column</option><option value="row">Right LT → Right PP → Left LT → Left PP per level</option><option value="pp">Pin prick first</option></select></label></section><div class="sheet-scroll"><div class="sheet" id="sheet"><img src="worksheet.png" onerror="if(this.src.endsWith('worksheet.png'))this.src='worksheet.jpg'" alt="User-provided ASIA ISNCSCI worksheet with interactive sensory score boxes"><input id="patientName" class="meta-input" style="left:735px;top:0px;width:240px;height:20px" placeholder="Patient Name / ID" aria-label="Patient Name"><input id="examDate" class="meta-input" style="left:1095px;top:0px;width:185px;height:20px" placeholder="Date / Time" aria-label="Date and Time of Exam"><input id="examinerName" class="meta-input" style="left:750px;top:27px;width:225px;height:22px" placeholder="Examiner Name" aria-label="Examiner Name"></div></div><section class="bottom"><span>Record score:</span><button class="big" data-value="0">0</button><button class="big" data-value="1">1</button><button class="big" data-value="2">2</button><button data-value="NT">NT</button><button id="prev">← Previous</button><button id="next">Next →</button><span class="muted">Click a box to retest; keyboard 0/1/2, N for NT, Backspace/Z to Undo, arrows to navigate.</span></section><p class="hint" id="outlineHint">Select a sensory cell, then choose Draw new region to click around the matching anatomy. Finish drawing closes the polygon. Edit corners lets you drag vertices; double-click an edge to add a vertex, or right-click a vertex to remove it. Draw new region adds another separate area to the selected dermatome. Use Region to choose which area to move or reshape. Move testing dot lets you drag the blue dot independently. All changes save automatically.</p><p class="legend">Outlines are user-editable visual annotations, not verified clinical dermatome boundaries. Numeric totals appear after all required entries are numeric.</p><p class="foot">Prototype for engineering evaluation only. The worksheet background is your supplied image. Scores are stored locally in this browser and backed up when run via the local launcher; avoid real patient identifiers. USB serial requires Chrome/Edge on localhost or HTTPS. No clinical scoring/classification is calculated.</p></main><script>
+.dermatome-region{fill:var(--accent);fill-opacity:.38;stroke:var(--accent-ink);stroke-width:3;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.dermatome-region.selected{fill-opacity:.5;stroke:#4a044e}
+.dermatome-map.calibrating{pointer-events:auto;cursor:grab;touch-action:none;z-index:4}.dermatome-map.calibrating:active{cursor:grabbing}
+.dermatome-dot{fill:var(--accent-ink);stroke:#fff;stroke-width:2;vector-effect:non-scaling-stroke}
+.dot-ring{fill:none;stroke:var(--accent);stroke-width:3;transform-box:fill-box;transform-origin:center;animation:ring 1.6s ease-out infinite;vector-effect:non-scaling-stroke}
+@keyframes ring{0%{transform:scale(1);opacity:.9}100%{transform:scale(3.2);opacity:0}}
+.edit-handle{fill:#fff;stroke:var(--accent-ink);stroke-width:2.5;cursor:move;vector-effect:non-scaling-stroke}
+.dermatome-map.drawing{cursor:crosshair}.dermatome-map.editing{cursor:crosshair}.dermatome-map.editing .dermatome-region{cursor:move}
+
+/* Status panel */
+.panel{width:340px;flex:none;display:flex;flex-direction:column;gap:12px;overflow:auto;min-height:0}
+.card{background:var(--surface);border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px #0f172a14}
+.now{text-align:center;border:3px solid var(--accent);padding:12px 14px 16px}
+.now-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted)}
+.now-side{font-size:40px;font-weight:900;letter-spacing:3px;color:var(--brand);line-height:1.1;margin-top:4px}
+.now-level{font-size:118px;font-weight:900;line-height:.95;color:var(--accent-ink);letter-spacing:-2px}
+.now-mod{display:inline-block;margin-top:8px;font-size:22px;font-weight:800;letter-spacing:1.5px;padding:6px 16px;border-radius:999px;border:3px solid var(--brand);color:var(--brand)}
+.now-mod.pp{background:var(--brand);color:#fff}
+.last{display:flex;align-items:center;gap:14px}
+.last-val{width:64px;height:64px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:900;background:#e2e8f0;color:var(--muted);flex:none}
+.last-val[data-v="0"]{background:var(--s0);color:var(--s0-on)}.last-val[data-v="1"]{background:var(--s1);color:var(--s1-on)}.last-val[data-v="2"]{background:var(--s2);color:var(--s2-on)}.last-val[data-v="NT"]{background:var(--snt);color:var(--snt-on);font-size:24px}.last-val[data-v="undo"]{font-size:28px}
+.last-where{font-size:15px;font-weight:600}.last-where small{display:block;font-weight:500;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px}
+.prog-top{display:flex;justify-content:space-between;align-items:baseline;font-weight:600}
+.prog-top strong{font-size:22px}
+.bar{height:10px;border-radius:5px;background:#e2e8f0;margin:8px 0 10px;overflow:hidden}.bar i{display:block;height:100%;background:var(--brand-2);width:0;transition:width .2s}
+.cols{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:12px;text-align:center;color:var(--muted)}
+.cols b{display:block;font-size:15px;color:var(--ink)}
+.done{background:#dcfce7;color:#14532d;font-weight:700;text-align:center;border:2px solid #86efac}
+.done[hidden]{display:none}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.key{border:0;border-radius:10px;padding:12px 0 8px;font-size:30px;font-weight:900;line-height:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.key small{font-size:11px;font-weight:600;letter-spacing:.3px}
+.key[data-value="0"]{background:var(--s0);color:var(--s0-on)}.key[data-value="1"]{background:var(--s1);color:var(--s1-on)}.key[data-value="2"]{background:var(--s2);color:var(--s2-on)}.key[data-value="NT"]{background:var(--snt);color:var(--snt-on);font-size:24px}
+.key:hover{filter:brightness(1.08)}
+.nav{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}
+.nav .btn{padding:11px 6px}
+.kbd-hint{font-size:12px;color:var(--muted);margin:8px 0 0;text-align:center}
+
+/* Giant confirmation overlay: readable from peripheral vision */
+.flash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;pointer-events:none;z-index:50;opacity:0;background:radial-gradient(circle at center,#0f172a99,#0f172a00 62%)}
+.flash.show{animation:flash var(--dur,700ms) ease-out forwards}
+.flash-val{font:900 min(50vh,42vw)/.9 "Segoe UI",system-ui,Arial,sans-serif;color:var(--fc,#e2e8f0);text-shadow:0 8px 48px #0006}
+.flash[data-v="0"]{--fc:var(--s0)}.flash[data-v="1"]{--fc:var(--s1)}.flash[data-v="2"]{--fc:var(--s2)}.flash[data-v="NT"]{--fc:#cbd5e1}
+.flash[data-v="undo"] .flash-val{font-size:min(26vh,20vw)}
+.flash-cap{font-size:3.4vh;font-weight:700;color:#fff;background:#0f172acc;padding:.5vh 2vh;border-radius:999px}
+@keyframes flash{0%{opacity:0;transform:scale(.88)}10%{opacity:1;transform:scale(1)}72%{opacity:1}100%{opacity:0}}
+
+/* Settings drawer */
+.scrim{position:fixed;inset:0;background:#0f172a55;z-index:39}
+.scrim[hidden],.drawer[hidden]{display:none}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(400px,100vw);background:var(--surface);z-index:40;box-shadow:-8px 0 30px #0f172a33;display:flex;flex-direction:column}
+.drawer header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+.drawer h2{margin:0;font-size:18px}
+.drawer .body{padding:6px 20px 20px;overflow:auto}
+.drawer h3{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin:20px 0 8px}
+.set{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #eef2f6}
+.set span small{display:block;color:var(--muted);font-size:12px}
+.set select{padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:#fff;max-width:200px}
+.set input[type=checkbox]{width:20px;height:20px;accent-color:var(--brand)}
+.about{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* Sign-in and start screens */
+.screen{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at 30% 20%,#1d5a96,#0b2442 70%);overflow:auto}
+.screen[hidden]{display:none}
+.sheet-card{background:var(--surface);border-radius:16px;box-shadow:0 24px 60px #0008;width:min(520px,100%);padding:28px 30px;max-height:calc(100vh - 32px);overflow:auto}
+.sheet-card .brand{color:var(--brand);font-size:24px;margin-bottom:4px}
+.sheet-card .brand small{color:var(--muted);opacity:1}
+.sheet-card h2{font-size:15px;margin:22px 0 10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;font-size:13px;font-weight:600}
+.field input,.field select{padding:11px 12px;border:1px solid var(--line);border-radius:8px;font-size:16px;font-weight:500;background:#fff}
+.field input:focus,.field select:focus{outline:3px solid #93c5fd;border-color:var(--brand-2)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.err{color:var(--bad);font-size:14px;font-weight:600;min-height:20px;margin:4px 0 8px}
+.wide{width:100%;padding:13px;font-size:16px}
+.resume{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;text-align:left;padding:14px 16px;border-radius:10px;border:2px solid var(--brand);background:#eff6ff;margin-top:14px}
+.resume:hover{background:#dbeafe}
+.resume b{font-size:16px}.resume span{font-size:13px;color:var(--muted)}
+.recent{display:flex;flex-direction:column;gap:6px;max-height:190px;overflow:auto}
+.recent button{display:flex;justify-content:space-between;gap:10px;text-align:left;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px}
+.recent button:hover{background:#f1f5f9}
+.recent span{color:var(--muted);font-size:12px;white-space:nowrap}
+.hw{font-size:12px;color:var(--muted);margin:16px 0 0}
+.hint-small{font-size:12px;color:var(--muted);margin:10px 0 0}
+.link{background:none;border:0;color:var(--brand-2);font-weight:600;padding:0;text-decoration:underline}
+.closed-msg{color:#fff;text-align:center;font-size:20px}
+
+@media (max-width:1100px){
+ body{height:auto;overflow:auto}
+ .workspace{flex-direction:column}
+ .panel{width:auto;order:-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));overflow:visible}
+ .now-level{font-size:90px}
+ .who{display:none}
+}
+@media (max-width:700px){.top{flex-wrap:wrap}.brand small{display:none}.workspace{padding:8px}}
+@media (prefers-reduced-motion:reduce){.score.active,.dot-ring{animation:none}.flash.show{animation-name:flash-still}@keyframes flash-still{0%,80%{opacity:1}100%{opacity:0}}}
+@media print{
+ @page{size:landscape;margin:8mm}
+ body{height:auto;overflow:visible;background:#fff;display:block}
+ .top,.calib,.panel,.flash,.drawer,.scrim,.screen,.row-band,.col-mark,.dermatome-map{display:none!important}
+ .workspace{padding:0;display:block}.stage{display:block}
+ .frame{width:auto!important;height:auto!important;box-shadow:none;overflow:visible;border-radius:0}
+ .sheet{position:relative;transform:none!important;zoom:.75}
+ .score,.score[data-v]{background:none!important;color:#000!important;box-shadow:none!important;outline:none!important;animation:none!important;font-size:17px}
+ .meta-input{border:0!important;background:transparent!important;color:#000}
+ .total{color:#000}
+}
+</style></head><body>
+<header class="top">
+ <div class="brand"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#fff" fill-opacity=".14"/><path d="M9 7v18M16 5v22M23 7v18" stroke="#fff" stroke-width="3" stroke-linecap="round"/><circle cx="16" cy="16" r="4" fill="#e879f9"/></svg>NeuroSense <small>Sensory examination</small></div>
+ <div class="who" id="who"><span>Patient: <b id="whoPatient">—</b></span><span>Examiner: <b id="whoExaminer">—</b></span><span id="whoDate"></span></div>
+ <button id="connect" class="pill" data-state="idle" type="button"><span class="dot"></span><span id="connection">Keyboard mode</span></button>
+ <span id="saveStatus" class="pill save-badge"><span class="dot"></span><span id="saveText">Auto-save ready</span></span>
+ <div class="menu-wrap"><button id="menuBtn" class="btn" type="button" aria-haspopup="menu" aria-expanded="false">Session ▾</button>
+  <div class="menu" id="menu" role="menu" hidden>
+   <button id="newExam" type="button" role="menuitem">New exam / switch patient…</button>
+   <hr>
+   <button id="saveSession" type="button" role="menuitem">Download backup file</button>
+   <button id="loadSession" type="button" role="menuitem">Load backup file…</button>
+   <button id="csv" type="button" role="menuitem">Export CSV</button>
+   <button id="print" type="button" role="menuitem">Print worksheet</button>
+   <hr>
+   <button id="reset" class="danger" type="button" role="menuitem">Clear all scores…</button>
+   <hr>
+   <button id="lockApp" type="button" role="menuitem">Lock / sign out</button>
+   <button id="quitApp" type="button" role="menuitem">Quit NeuroSense</button>
+  </div></div>
+ <input id="sessionFile" type="file" accept="application/json,.json" hidden>
+ <button id="settingsBtn" class="btn" type="button">⚙ Settings</button>
+</header>
+<section class="calib" id="calibBar" hidden>
+ <strong>Calibration</strong>
+ <label>Outline tool <select id="outlineMode"><option value="view">View only</option><option value="move">Move selected region</option><option value="point">Move testing dot</option><option value="edit">Edit corners</option><option value="draw">Draw new region</option></select></label>
+ <label>Region <select id="regionSelect"></select></label>
+ <button id="deleteRegion" class="btn" type="button">Delete region</button><button id="finishOutline" class="btn" type="button">Finish drawing</button><button id="undoVertex" class="btn" type="button">Undo point</button><button id="resetPosition" class="btn" type="button">Reset this region</button><button id="exportOutlines" class="btn" type="button">Export outlines</button><button id="importOutlines" class="btn" type="button">Import outlines</button><input id="outlineFile" type="file" accept="application/json,.json" hidden>
+ <details><summary>How to calibrate</summary><p id="outlineHint">Select a sensory cell, then choose Draw new region to click around the matching anatomy. Finish drawing closes the polygon. Edit corners lets you drag vertices; double-click an edge to add a vertex, or right-click a vertex to remove it. Draw new region adds another separate area to the selected dermatome. Use Region to choose which area to move or reshape. Move testing dot drags the dot independently. All changes save automatically.</p><p>Outlines are user-editable visual annotations, not verified clinical dermatome boundaries.</p></details>
+</section>
+<main class="workspace">
+ <div class="stage" id="stage"><div class="frame" id="frame"><div class="sheet" id="sheet"><img src="worksheet.png" onerror="if(this.src.endsWith('worksheet.png'))this.src='worksheet.jpg'" alt="ASIA ISNCSCI worksheet with interactive sensory score boxes"><input id="patientName" class="meta-input" style="left:735px;top:0px;width:240px;height:20px" placeholder="Patient Name / ID" aria-label="Patient Name"><input id="examDate" class="meta-input" style="left:1095px;top:0px;width:185px;height:20px" placeholder="Date / Time" aria-label="Date and Time of Exam"><input id="examinerName" class="meta-input" style="left:750px;top:27px;width:225px;height:22px" placeholder="Examiner Name" aria-label="Examiner Name"><div class="row-band" id="rowBand"></div><div class="col-mark" id="colMark"></div></div></div></div>
+ <aside class="panel" aria-label="Exam status">
+  <section class="card now" aria-live="polite"><div class="now-label">Now testing</div><div class="now-side" id="nowSide">RIGHT</div><div class="now-level" id="nowLevel">C2</div><div class="now-mod" id="nowMod">LIGHT TOUCH</div></section>
+  <section class="card last"><div class="last-val" id="lastVal">–</div><div class="last-where"><small>Last entered</small><span id="lastWhere">Nothing yet</span></div></section>
+  <section class="card done" id="doneBanner" hidden>All 112 sensory scores recorded</section>
+  <section class="card"><div class="prog-top"><span>Progress</span><strong id="progress">0 / 112</strong></div><div class="bar"><i id="progressBar"></i></div><div class="cols" id="colProgress"></div></section>
+  <section class="card"><div class="keys"><button class="key" type="button" data-value="0">0<small>Absent</small></button><button class="key" type="button" data-value="1">1<small>Altered</small></button><button class="key" type="button" data-value="2">2<small>Normal</small></button><button class="key" type="button" data-value="NT">NT<small>Not testable</small></button></div>
+   <div class="nav"><button id="prev" class="btn" type="button">← Prev</button><button id="undo" class="btn" type="button">↶ Undo</button><button id="next" class="btn" type="button">Next →</button></div>
+   <p class="kbd-hint">Keys 0 · 1 · 2 · N = NT · Backspace/Z = undo · ← → move · click a box to retest</p></section>
+ </aside>
+</main>
+
+<div class="flash" id="flash" aria-hidden="true"><div class="flash-val" id="flashVal"></div><div class="flash-cap" id="flashCap"></div></div>
+<div class="sr-only" aria-live="assertive" id="announce"></div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="settings" hidden aria-label="Settings">
+ <header><h2>Settings</h2><button id="settingsClose" class="btn" type="button">Close</button></header>
+ <div class="body">
+  <h3>Entry confirmation</h3>
+  <label class="set"><span>Show entered value full-screen<small>Large colored value after every score</small></span><input type="checkbox" id="setFlash"></label>
+  <label class="set"><span>Display time</span><select id="setFlashDur"><option value="700">Short (0.7 s)</option><option value="1400">Long (1.4 s)</option></select></label>
+  <h3>Display</h3>
+  <label class="set"><span>Score colors<small>0 · 1 · 2 · NT</small></span><select id="setPalette"><option value="standard">Red · Amber · Green · Gray</option><option value="cb">Color-blind safe (Orange · Yellow · Blue · Gray)</option></select></label>
+  <label class="set"><span>Score size on sheet</span><select id="setSize"><option value="normal">Normal</option><option value="large">Large</option></select></label>
+  <label class="set"><span>Highlight active dermatome</span><input type="checkbox" id="showMap" checked></label>
+  <h3>Exam flow</h3>
+  <label class="set"><span>Auto-advance after each score<small>Skips boxes that are already filled</small></span><input type="checkbox" id="advance" checked></label>
+  <label class="set"><span>Testing order</span><select id="order"><option value="lt" selected>All Light Touch → All Pin Prick</option><option value="columns">Complete each column</option><option value="row">Per level: R-LT → R-PP → L-LT → L-PP</option><option value="pp">Pin prick first</option></select></label>
+  <h3>Advanced</h3>
+  <label class="set"><span>Dermatome calibration mode<small>Shows outline editing tools</small></span><input type="checkbox" id="setCalib"></label>
+  <h3>About</h3>
+  <p class="about">NeuroSense <span id="appVersion"></span>. ASIA ISNCSCI sensory scoring aid. <span id="encInfo"></span> For engineering evaluation; not a validated clinical device. No ISNCSCI classification is calculated.</p>
+ </div>
+</aside>
+
+<div class="screen" id="login" hidden>
+ <form class="sheet-card" id="loginForm" autocomplete="off">
+  <div class="brand"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0f3a66"/><path d="M9 7v18M16 5v22M23 7v18" stroke="#fff" stroke-width="3" stroke-linecap="round"/><circle cx="16" cy="16" r="4" fill="#e879f9"/></svg>NeuroSense</div>
+  <div class="hint-small" style="margin:0 0 18px">Sign in to start or continue an exam</div>
+  <label class="field">Examiner ID / badge<input id="loginUser" autocomplete="username" placeholder="Scan badge or type ID"></label>
+  <label class="field">PIN<input id="loginPass" type="password" inputmode="numeric" autocomplete="current-password" required></label>
+  <div class="err" id="loginErr" role="alert"></div>
+  <button class="btn primary wide" type="submit">Sign in</button>
+  <p class="hint-small">Demo build: PIN is 1234. Hospital credential sign-in will replace this.</p>
+ </form>
+</div>
+
+<div class="screen" id="start" hidden>
+ <div class="sheet-card">
+  <div class="brand"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0f3a66"/><path d="M9 7v18M16 5v22M23 7v18" stroke="#fff" stroke-width="3" stroke-linecap="round"/><circle cx="16" cy="16" r="4" fill="#e879f9"/></svg>NeuroSense <small>ASIA ISNCSCI sensory examination</small></div>
+  <button id="resumeBtn" class="resume" type="button" hidden><b id="resumeTitle">Continue exam</b><span id="resumeInfo"></span></button>
+  <form id="newForm">
+   <h2>New exam</h2>
+   <label class="field">Patient name / ID<input id="newPatient" required maxlength="200" placeholder="e.g. MRN or study ID"></label>
+   <div class="row2"><label class="field">Examiner<input id="newExaminer" maxlength="200"></label><label class="field">Date / time<input id="newDate" type="datetime-local"></label></div>
+   <label class="field">Testing order<select id="newOrder"><option value="lt">All Light Touch → All Pin Prick</option><option value="columns">Complete each column</option><option value="row">Per level: R-LT → R-PP → L-LT → L-PP</option><option value="pp">Pin prick first</option></select></label>
+   <button class="btn primary wide" type="submit">Start exam</button>
+  </form>
+  <div id="recentWrap" hidden><h2>Recent sessions</h2><div class="recent" id="recent"></div></div>
+  <p class="hw" id="hwInfo"></p>
+ </div>
+</div>
+
+<div class="screen" id="closed" hidden><div class="closed-msg"><p><b>NeuroSense has closed.</b></p><p>Your exam is saved. You can close this window.</p></div></div>
+<script>
 const levels=['C2','C3','C4','C5','C6','C7','C8','T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12','L1','L2','L3','L4','L5','S1','S2','S3','S4-5'];
 // Cell centers measured against the 1311 × 858 uploaded worksheet screenshot.
 const ys=[137,159,180,201,223,245,267,289,310,332,354,376,398,420,442,463,485,507,529,549,571,593,615,637,658,680,701,723];
@@ -28,7 +284,8 @@ const cells=columns.flatMap((col,c)=>levels.map((level,i)=>({key:col.id+'-'+leve
 const NS='http://www.w3.org/2000/svg';
 const map=document.createElementNS(NS,'svg');map.setAttribute('viewBox','0 0 1311 858');map.setAttribute('class','dermatome-map');map.setAttribute('aria-hidden','true');
 const regionGroup=document.createElementNS(NS,'g');map.appendChild(regionGroup);
-const dot=document.createElementNS(NS,'circle');dot.setAttribute('class','dermatome-dot');dot.setAttribute('r','4');map.appendChild(dot);
+const ring=document.createElementNS(NS,'circle');ring.setAttribute('class','dot-ring');ring.setAttribute('r','6');map.appendChild(ring);
+const dot=document.createElementNS(NS,'circle');dot.setAttribute('class','dermatome-dot');dot.setAttribute('r','6');map.appendChild(dot);
 // Coordinates correspond to the original screenshot; bands are intentionally approximate.
 const outlines={
 'C2':'588,98 616,106 613,145 591,164 578,148 581,117',
@@ -68,6 +325,18 @@ const totalNodes={};totals.forEach(t=>{const e=document.createElement('div');e.c
 function subtotal(id){const vals=levels.map(l=>scores[id+'-'+l]);return vals.every(v=>v==='0'||v==='1'||v==='2')?vals.reduce((a,v)=>a+Number(v),0):null}
 function renderTotals(){const v={};for(const c of columns)v[c.id]=subtotal(c.id);v['LT-R']=v['R-LT'];v['LT-L']=v['L-LT'];v['PP-R']=v['R-PP'];v['PP-L']=v['L-PP'];v['LT-T']=v['LT-R']!==null&&v['LT-L']!==null?v['LT-R']+v['LT-L']:null;v['PP-T']=v['PP-R']!==null&&v['PP-L']!==null?v['PP-R']+v['PP-L']:null;for(const [k,e] of Object.entries(totalNodes)){e.textContent=v[k]===null?'':v[k];e.title=v[k]===null?'Complete all 28 numeric scores on each required side to calculate':'Sensory total '+v[k]}}
 
+// Per-viewer display preferences (not part of the exam session)
+const settingsKey='neurosense-settings-v1';
+const settingDefaults={flash:true,flashMs:700,palette:'standard',size:'normal',advance:true,showMap:true,calib:false};
+let settings={...settingDefaults};
+try{
+  const s=JSON.parse(localStorage.getItem(settingsKey)||'{}');
+  if(s&&typeof s==='object')for(const k of Object.keys(settingDefaults))if(typeof s[k]===typeof settingDefaults[k])settings[k]=s[k];
+  if(!['standard','cb'].includes(settings.palette))settings.palette='standard';
+  if(!['normal','large'].includes(settings.size))settings.size='normal';
+  if(![700,1400].includes(settings.flashMs))settings.flashMs=700;
+}catch{}
+
 const outlineStorage='neurosense-multi-regions-v2';
 const dotStorage='neurosense-test-dots-v2';
 const sessionStorageKey='neurosense-full-session-v1';
@@ -91,9 +360,9 @@ function distanceToSegment(p,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,M
 function renderMap(){const level=cells[active].level,mode=modeEl.value,rs=getRegions(level);if(selectedRegion>=rs.length)selectedRegion=Math.max(0,rs.length-1);
  const enabled=document.getElementById('showMap').checked;map.style.display=enabled?'':'none';map.style.pointerEvents=mode==='view'?'none':'auto';map.style.zIndex=mode==='view'?'1':'5';map.classList.toggle('drawing',mode==='draw');map.classList.toggle('editing',mode==='edit');
  regionSelect.replaceChildren();rs.forEach((_,i)=>{const o=document.createElement('option');o.value=i;o.textContent='Area '+(i+1);regionSelect.appendChild(o)});regionSelect.value=String(selectedRegion);regionSelect.disabled=mode==='draw';
- regionGroup.replaceChildren();rs.forEach((pts,i)=>{const poly=document.createElementNS(NS,'polygon');poly.setAttribute('class','dermatome-region');poly.setAttribute('points',pts.map(p=>p.join(',')).join(' '));poly.dataset.region=i;poly.style.fillOpacity=i===selectedRegion&&mode!=='view'?'0.33':'0.23';poly.style.stroke=i===selectedRegion&&mode!=='view'?'#063cb2':'#1263d8';regionGroup.appendChild(poly)});
+ regionGroup.replaceChildren();rs.forEach((pts,i)=>{const poly=document.createElementNS(NS,'polygon');poly.setAttribute('class','dermatome-region');poly.setAttribute('points',pts.map(p=>p.join(',')).join(' '));poly.dataset.region=i;poly.classList.toggle('selected',i===selectedRegion&&mode!=='view');regionGroup.appendChild(poly)});
  if(mode==='draw'&&draft.length){const poly=document.createElementNS(NS,'polyline');poly.setAttribute('points',draft.map(p=>p.join(',')).join(' '));poly.setAttribute('fill','none');poly.setAttribute('stroke','#e11d48');poly.setAttribute('stroke-width','3');regionGroup.appendChild(poly)}
- const xy=dots[level]||keyDots[level]||[650,300];dot.setAttribute('cx',xy[0]);dot.setAttribute('cy',xy[1]);dot.style.display='';dot.style.pointerEvents=mode==='point'?'all':'none';dot.style.cursor=mode==='point'?'grab':'default';dot.setAttribute('r',mode==='point'?'8':'4');
+ const xy=dots[level]||keyDots[level]||[650,300];dot.setAttribute('cx',xy[0]);dot.setAttribute('cy',xy[1]);ring.setAttribute('cx',xy[0]);ring.setAttribute('cy',xy[1]);ring.style.display=mode==='point'?'none':'';dot.style.display='';dot.style.pointerEvents=mode==='point'?'all':'none';dot.style.cursor=mode==='point'?'grab':'default';dot.setAttribute('r',mode==='point'?'8':'6');
  editor.replaceChildren();if(mode==='edit'){getPoints(level).forEach(([x,y],i)=>{const h=document.createElementNS(NS,'circle');h.setAttribute('cx',x);h.setAttribute('cy',y);h.setAttribute('r',6);h.setAttribute('class','edit-handle');h.dataset.vertex=i;editor.appendChild(h)})}if(mode==='draw'){draft.forEach(([x,y])=>{const h=document.createElementNS(NS,'circle');h.setAttribute('cx',x);h.setAttribute('cy',y);h.setAttribute('r',4);h.setAttribute('class','edit-handle');editor.appendChild(h)})}
  document.getElementById('finishOutline').disabled=mode!=='draw'||draft.length<3;document.getElementById('undoVertex').disabled=mode!=='draw'||!draft.length;document.getElementById('deleteRegion').disabled=rs.length===0;
 }
@@ -116,7 +385,7 @@ document.getElementById('exportOutlines').onclick=()=>{const blob=new Blob([JSON
 document.getElementById('importOutlines').onclick=()=>document.getElementById('outlineFile').click();
 document.getElementById('outlineFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text()),input=data.regions||data.outlines||data;if(!input||typeof input!=='object'||Array.isArray(input))throw Error('Invalid format');const clean={};for(const [level,raw] of Object.entries(input)){if(!levels.includes(level))throw Error('Unknown level '+level);const arr=validPolygon(raw)?[raw]:raw;if(!Array.isArray(arr)||arr.length>30||!arr.every(validPolygon))throw Error('Invalid regions for '+level);clean[level]=arr}const newDots={};if(data.dots){for(const [l,xy] of Object.entries(data.dots)){if(!levels.includes(l)||!Array.isArray(xy)||xy.length!==2||!xy.every(n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=1311))throw Error('Invalid dot for '+l);newDots[l]=xy}}regions=clean;dots=newDots;selectedRegion=0;saveOutlines();renderMap();alert('Regions and testing dots imported')}catch(err){alert('Could not import: '+err.message)}e.target.value=''};
 
-const sheet=document.getElementById('sheet'),progress=document.getElementById('progress'),selection=document.getElementById('selection'),saveStatusEl=document.getElementById('saveStatus');
+const sheet=document.getElementById('sheet'),progress=document.getElementById('progress'),saveStatusEl=document.getElementById('saveStatus'),saveTextEl=document.getElementById('saveText');
 const patientNameEl=document.getElementById('patientName'),examinerNameEl=document.getElementById('examinerName'),examDateEl=document.getElementById('examDate');
 
 // Keep only known cells with allowed values, and undo entries that point at a real cell.
@@ -181,20 +450,23 @@ function applySessionPayload(data){
 
 // One /api/save in flight at a time; a request made meanwhile just re-sends the latest state afterwards,
 // so responses can never arrive out of order and write stale data.
-let saving=false,dirty=false,lastDisk=false;
+let saving=false,dirty=false,lastDisk=false,lastStatus=0,hasServer=false,synced=false;
 async function pushDisk(){
+  if(!synced)return false; // never overwrite the server copy before reconciling with it
   if(saving){dirty=true;return lastDisk}
   saving=true;
   try{
     do{
       dirty=false;
       const res=await fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(buildSessionPayload())});
-      lastDisk=res.ok;
+      lastDisk=res.ok;lastStatus=res.status;
     }while(dirty);
-  }catch{lastDisk=false}
+  }catch{lastDisk=false;lastStatus=0}
   saving=false;
   return lastDisk;
 }
+
+function setSaveStatus(state,text){saveStatusEl.className='pill save-badge '+state;saveTextEl.textContent=text}
 
 async function persistSession(isManual=false){
   const payload=buildSessionPayload();
@@ -203,17 +475,15 @@ async function persistSession(isManual=false){
   localStorage.setItem(sessionStorageKey,JSON.stringify(payload));
   const timeStr=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 
-  // 2. Attempt to auto-save to Python local backup server if running
+  // 2. Auto-save to the local NeuroSense server (encrypted disk backup) when it is running
   let diskSaved=false;
-  if(location.protocol.startsWith('http'))diskSaved=await pushDisk();
+  if(hasServer)diskSaved=await pushDisk();
 
-  if(diskSaved){
-    saveStatusEl.textContent='Disk & browser saved · '+timeStr;
-    saveStatusEl.className='save-badge ok';
-  }else{
-    saveStatusEl.textContent='Browser auto-saved · '+timeStr;
-    saveStatusEl.className='save-badge';
-  }
+  if(diskSaved)setSaveStatus('ok','Backed up · '+timeStr);
+  else if(!hasServer)setSaveStatus('','Saved in browser · '+timeStr);
+  else if(lastStatus===409)setSaveStatus('bad','Session replaced in another window — reload');
+  else if(lastStatus===401){setSaveStatus('warn','Signed out — sign in to resume backup');showLogin()}
+  else setSaveStatus('warn','Disk backup offline · saved in browser');
 
   // 3. If Manual Save button clicked, download a timestamped JSON backup file
   if(isManual){
@@ -227,9 +497,9 @@ async function persistSession(isManual=false){
   }
 }
 
-// Sync with Python launcher session on startup if available
+// Sync with the launcher's server session (requires sign-in)
 async function syncWithServerSession(){
-  if(!location.protocol.startsWith('http'))return;
+  if(!hasServer)return;
   try{
     const res=await fetch('/api/session');
     if(!res.ok)return;
@@ -242,6 +512,7 @@ async function syncWithServerSession(){
       const sameSession=sid!==''&&sid===localStorage.getItem('ns-sid');
       localStorage.setItem('ns-sid',sid);
       if(!sameSession||!(mine.timestamp>serverData.timestamp))applySessionPayload(serverData);
+      synced=true;
       persistSession(false);
     }
   }catch{}
@@ -269,7 +540,7 @@ async function loadDefaultRegionsIfNeeded(){
   }catch{}
 }
 
-[patientNameEl,examinerNameEl,examDateEl].forEach(el=>el.addEventListener('input',()=>persistSession(false)));
+[patientNameEl,examinerNameEl,examDateEl].forEach(el=>el.addEventListener('input',()=>{renderWho();persistSession(false)}));
 document.getElementById('saveSession').onclick=()=>persistSession(true);
 document.getElementById('loadSession').onclick=()=>document.getElementById('sessionFile').click();
 document.getElementById('sessionFile').onchange=async e=>{
@@ -283,12 +554,57 @@ document.getElementById('sessionFile').onchange=async e=>{
   e.target.value='';
 };
 
+// ---- Status panel and sheet highlights ----
+const sideName=c=>c.col<2?'Right':'Left',modName=c=>c.col%2?'Pin Prick':'Light Touch';
+const nowSide=document.getElementById('nowSide'),nowLevel=document.getElementById('nowLevel'),nowMod=document.getElementById('nowMod');
+const rowBand=document.getElementById('rowBand'),colMark=document.getElementById('colMark');
+const colProgress=document.getElementById('colProgress'),progressBar=document.getElementById('progressBar'),doneBanner=document.getElementById('doneBanner');
+// Band spans the level label and both sensory columns on the active side
+const bandSpan=[[330,515],[813,992]];
+
+function renderNow(){
+  const c=cells[active];
+  nowSide.textContent=sideName(c).toUpperCase();
+  nowLevel.textContent=c.level;
+  nowMod.textContent=modName(c).toUpperCase();
+  nowMod.classList.toggle('pp',c.col%2===1);
+  const [x0,x1]=bandSpan[c.col<2?0:1];
+  rowBand.style.cssText=`left:${x0}px;width:${x1-x0}px;top:${c.y-c.h/2-3}px;height:${c.h+6}px`;
+  colMark.style.cssText=`left:${c.x-c.w/2}px;width:${c.w}px;top:119px`;
+  const n=Object.keys(scores).filter(k=>cells.some(c=>c.key===k)).length;
+  progress.textContent=n+' / 112';
+  progressBar.style.width=(n/112*100)+'%';
+  doneBanner.hidden=n<112;
+  colProgress.replaceChildren(...columns.map(col=>{const d=document.createElement('div');d.innerHTML=`<b>${levels.filter(l=>scores[col.id+'-'+l]!==undefined).length}/28</b>`;d.append(col.id);return d}));
+  renderWho();
+}
+function renderWho(){
+  const m=getPatientMeta();
+  document.getElementById('whoPatient').textContent=m.patientName||'—';
+  document.getElementById('whoExaminer').textContent=m.examinerName||'—';
+  document.getElementById('whoDate').textContent=m.examDate;
+}
+
+// ---- Entry confirmation (giant colored value, readable from peripheral vision) ----
+const flashEl=document.getElementById('flash'),flashVal=document.getElementById('flashVal'),flashCap=document.getElementById('flashCap'),announceEl=document.getElementById('announce');
+const lastVal=document.getElementById('lastVal'),lastWhere=document.getElementById('lastWhere');
+function confirmEntry(v,text,caption){
+  lastVal.dataset.v=v;lastVal.textContent=v==='undo'?'↶':text;lastWhere.textContent=caption;
+  announceEl.textContent=text+', '+caption;
+  if(!settings.flash)return;
+  flashEl.dataset.v=v;flashVal.textContent=text;flashCap.textContent=caption;
+  flashEl.style.setProperty('--dur',settings.flashMs+'ms');
+  flashEl.classList.remove('show');void flashEl.offsetWidth; // restart the animation on rapid entries
+  flashEl.classList.add('show');
+}
+const cellCaption=c=>`${sideName(c)} ${c.level} · ${modName(c)}`;
+
 function sequence(){const mode=document.getElementById('order').value;if(mode==='row')return levels.flatMap((_,i)=>[0,1,2,3].map(c=>c*28+i));if(mode==='pp')return [1,3,0,2].flatMap(c=>levels.map((_,i)=>c*28+i));if(mode==='lt')return [0,2,1,3].flatMap(c=>levels.map((_,i)=>c*28+i));return cells.map((_,i)=>i)}
-function render(shouldSave=true){document.querySelectorAll('.score').forEach((el,i)=>{el.textContent=scores[cells[i].key]??'';el.classList.toggle('active',i===active);el.setAttribute('aria-label',columns[cells[i].col].label+' '+cells[i].level+' score '+(scores[cells[i].key]??'blank'))});const c=cells[active];selection.textContent=columns[c.col].label+' · '+c.level;progress.textContent=Object.keys(scores).filter(k=>cells.some(c=>c.key===k)).length+' / 112';renderMap();renderTotals();if(shouldSave)persistSession(false)}
+function render(shouldSave=true){document.querySelectorAll('.score').forEach((el,i)=>{const v=scores[cells[i].key];el.textContent=v??'';if(v===undefined)delete el.dataset.v;else el.dataset.v=v;el.classList.toggle('active',i===active);el.setAttribute('aria-label',columns[cells[i].col].label+' '+cells[i].level+' score '+(v??'blank'))});renderNow();renderMap();renderTotals();if(shouldSave)persistSession(false)}
 function select(i){if(cells[i].level!==cells[active].level){selectedRegion=0;draft=[]}active=i;render()}
 function next(delta=1){const s=sequence(),p=s.indexOf(active);select(s[(p+delta+s.length)%s.length])}
-function record(value){const c=cells[active];history.push({key:c.key,previous:scores[c.key],index:active});scores[c.key]=String(value);if(document.getElementById('advance').checked){const s=sequence(),p=s.indexOf(active);const nxt=s.slice(p+1).concat(s.slice(0,p+1)).find(i=>scores[cells[i].key]===undefined);if(nxt!==undefined){if(cells[nxt].level!==c.level){selectedRegion=0;draft=[]}active=nxt}}render()}
-function undoLast(){const h=history.pop();if(!h||!cells[h.index])return;if(h.previous===undefined)delete scores[h.key];else scores[h.key]=h.previous;select(h.index)}
+function record(value){const c=cells[active];history.push({key:c.key,previous:scores[c.key],index:active});scores[c.key]=String(value);if(document.getElementById('advance').checked){const s=sequence(),p=s.indexOf(active);const nxt=s.slice(p+1).concat(s.slice(0,p+1)).find(i=>scores[cells[i].key]===undefined);if(nxt!==undefined){if(cells[nxt].level!==c.level){selectedRegion=0;draft=[]}active=nxt}}render();confirmEntry(String(value),String(value),cellCaption(c))}
+function undoLast(){const h=history.pop();if(!h||!cells[h.index])return;if(h.previous===undefined)delete scores[h.key];else scores[h.key]=h.previous;select(h.index);confirmEntry('undo','UNDO','Cleared '+cellCaption(cells[h.index]))}
 
 cells.forEach((c,i)=>{const b=document.createElement('button');b.type='button';b.className='score';b.style.left=(c.x-c.w/2)+'px';b.style.top=(c.y-c.h/2)+'px';b.style.width=c.w+'px';b.style.height=c.h+'px';b.addEventListener('click',()=>select(i));sheet.appendChild(b)});
 document.querySelectorAll('[data-value]').forEach(b=>b.onclick=()=>record(b.dataset.value));
@@ -298,7 +614,56 @@ document.getElementById('order').onchange=()=>render();
 document.getElementById('undo').onclick=undoLast;
 document.getElementById('reset').onclick=()=>{if(confirm('Clear all 112 sensory scores?')){scores={};history=[];select(0)}};
 
+// ---- Sheet scaling: the 1311×858 coordinate system is kept, the whole sheet is scaled to fit ----
+const stage=document.getElementById('stage'),frame=document.getElementById('frame'),stacked=matchMedia('(max-width:1100px)');
+function fitSheet(){
+  const r=stage.getBoundingClientRect();
+  let k=r.width/1311;
+  if(!stacked.matches)k=Math.min(k,r.height/858);
+  k=Math.max(.3,Math.min(k,2));
+  sheet.style.transform=`scale(${k})`;
+  frame.style.width=Math.floor(1311*k)+'px';
+  frame.style.height=Math.floor(858*k)+'px';
+}
+new ResizeObserver(fitSheet).observe(stage);
+
+// ---- Settings drawer and session menu ----
+const settingsEl=document.getElementById('settings'),scrim=document.getElementById('scrim'),menuEl=document.getElementById('menu'),menuBtn=document.getElementById('menuBtn');
+const setFlash=document.getElementById('setFlash'),setFlashDur=document.getElementById('setFlashDur'),setPalette=document.getElementById('setPalette'),setSize=document.getElementById('setSize'),setCalib=document.getElementById('setCalib'),advanceEl=document.getElementById('advance'),showMapEl=document.getElementById('showMap');
+function applySettings(){
+  document.documentElement.dataset.palette=settings.palette;
+  document.documentElement.dataset.size=settings.size;
+  setFlash.checked=settings.flash;setFlashDur.value=String(settings.flashMs);setPalette.value=settings.palette;setSize.value=settings.size;
+  advanceEl.checked=settings.advance;showMapEl.checked=settings.showMap;setCalib.checked=settings.calib;
+  document.getElementById('calibBar').hidden=!settings.calib;
+  if(!settings.calib&&modeEl.value!=='view'){modeEl.value='view';draft=[]}
+  renderMap();
+}
+function saveSettings(){
+  settings={flash:setFlash.checked,flashMs:Number(setFlashDur.value),palette:setPalette.value,size:setSize.value,advance:advanceEl.checked,showMap:showMapEl.checked,calib:setCalib.checked};
+  try{localStorage.setItem(settingsKey,JSON.stringify(settings))}catch{}
+  applySettings();
+}
+[setFlash,setFlashDur,setPalette,setSize,setCalib,advanceEl,showMapEl].forEach(el=>el.addEventListener('change',saveSettings));
+function openSettings(open){settingsEl.hidden=!open;scrim.hidden=!open;if(open)document.getElementById('settingsClose').focus()}
+function openMenu(open){menuEl.hidden=!open;menuBtn.setAttribute('aria-expanded',String(open))}
+document.getElementById('settingsBtn').onclick=()=>openSettings(true);
+document.getElementById('settingsClose').onclick=()=>openSettings(false);
+scrim.onclick=()=>openSettings(false);
+menuBtn.onclick=e=>{e.stopPropagation();openMenu(menuEl.hidden)};
+menuEl.addEventListener('click',()=>openMenu(false));
+document.addEventListener('click',e=>{if(!menuEl.hidden&&!menuEl.contains(e.target))openMenu(false)});
+
+const loginEl=document.getElementById('login'),startEl=document.getElementById('start');
+const overlayOpen=()=>!loginEl.hidden||!startEl.hidden||!settingsEl.hidden;
+// Keep the exam out of reach (focus, screen readers) while the sign-in or start screen covers it
+function syncInert(){const covered=!loginEl.hidden||!startEl.hidden;document.querySelectorAll('.top,.calib,.workspace').forEach(el=>el.inert=covered)}
+new MutationObserver(syncInert).observe(loginEl,{attributes:true,attributeFilter:['hidden']});
+new MutationObserver(syncInert).observe(startEl,{attributes:true,attributeFilter:['hidden']});
+
 document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){openSettings(false);openMenu(false);return}
+  if(overlayOpen()||!menuEl.hidden)return;
   if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;
   if(e.ctrlKey||e.metaKey||e.altKey||(e.repeat&&!e.key.startsWith('Arrow')))return; // no held-key floods or browser shortcuts
   if(['0','1','2'].includes(e.key)){record(e.key);e.preventDefault()}
@@ -327,19 +692,20 @@ document.getElementById('csv').onclick=()=>{
 };
 
 // Web Serial API connection + 4-button support (0, 1, 2, UNDO/DEL) + Auto-reconnect on USB replug
+const deviceEl=document.getElementById('connect'),connText=document.getElementById('connection');
+function setDevice(state,text){deviceEl.dataset.state=state;connText.textContent=text}
 let isReadingSerial=false;
 async function openSerialPort(port){
-  const status=document.getElementById('connection');
   if(isReadingSerial)return;
   isReadingSerial=true; // claim before any await so a second call can't clobber this one
-  let reader,endMsg='USB disconnected (plug back in to auto-resume)';
+  let reader,endMsg='Device disconnected · plug in to resume',endState='err';
   try{
     // Windows often still holds the COM port for a moment after a replug
     for(let tries=1;;tries++){
       try{await port.open({baudRate:115200});break}
-      catch(err){if(tries>=5)throw err;status.textContent='USB: waiting for port…';await new Promise(r=>setTimeout(r,500))}
+      catch(err){if(tries>=5)throw err;setDevice('wait','Waiting for device port…');await new Promise(r=>setTimeout(r,500))}
     }
-    status.textContent='USB connected';
+    setDevice('ok','Device connected');
     const decoder=new TextDecoder();
     reader=port.readable.getReader();
     let buffer='';
@@ -352,40 +718,46 @@ async function openSerialPort(port){
       while((idx=buffer.indexOf('\n'))>=0){
         const msg=buffer.slice(0,idx).trim();
         buffer=buffer.slice(idx+1);
-        const match=msg.match(/^(?:SCORE\s*[:=]\s*|BTN\s*[:=]\s*)?([012]|UNDO|DEL|DELETE)$/i);
-        if(match){
-          const cmd=match[1].toUpperCase();
-          if(cmd==='UNDO'||cmd==='DEL'||cmd==='DELETE')undoLast();
-          else record(cmd);
-        }
+        handleSerialLine(msg);
       }
     }
   }catch(err){
-    endMsg='USB: '+err.message+' (plug back in to retry)';
+    endMsg='Device error: '+err.message+' · plug in to retry';
   }finally{
     try{reader?.releaseLock()}catch{}
     try{await port.close()}catch{}
     isReadingSerial=false;
-    status.textContent=endMsg;
+    setDevice(endState,endMsg);
+  }
+}
+function handleSerialLine(msg){
+  if(overlayOpen())return; // no scoring behind the sign-in/start screens
+  const match=msg.match(/^(?:SCORE\s*[:=]\s*|BTN\s*[:=]\s*)?([012]|UNDO|DEL|DELETE)$/i);
+  if(match){
+    const cmd=match[1].toUpperCase();
+    if(cmd==='UNDO'||cmd==='DEL'||cmd==='DELETE')undoLast();
+    else record(cmd);
   }
 }
 
-document.getElementById('connect').onclick=async()=>{
-  const status=document.getElementById('connection');
+deviceEl.onclick=async()=>{
+  if(isReadingSerial)return;
   if(!('serial' in navigator)){
-    status.textContent='Web Serial unavailable: use Chrome/Edge on localhost or HTTPS';
+    setDevice('err','USB input needs Chrome or Edge');
     return;
   }
   try{
     const selectedPort=await navigator.serial.requestPort();
     await openSerialPort(selectedPort);
   }catch(err){
-    status.textContent='USB: '+err.message;
+    if(err.name==='NotFoundError')setDevice('idle','No device · click to connect');
+    else setDevice('err','Device: '+err.message);
   }
 };
 
 // Auto-connect to previously authorized Arduino on page load or when USB cable is plugged back in
 if('serial' in navigator){
+  setDevice('idle','No device · click to connect');
   navigator.serial.addEventListener('connect',async e=>{
     if(!isReadingSerial&&e.target){
       await openSerialPort(e.target);
@@ -396,9 +768,148 @@ if('serial' in navigator){
       openSerialPort(ports[0]);
     }
   }).catch(()=>{});
+}else setDevice('idle','Keyboard mode');
+
+// ---- Sign-in, start screen, quit ----
+let serverInfo=null,signedInUser='';
+const postJSON=(url,body)=>fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});
+async function fetchInfo(){
+  if(!location.protocol.startsWith('http'))return null;
+  try{const r=await fetch('/api/info');if(!r.ok)return null;const d=await r.json();return d&&d.app==='NeuroSense'?d:null}catch{return null}
+}
+const inExamKey='ns-in-exam',sidNow=()=>localStorage.getItem('ns-sid')||'local';
+function enterExam(){
+  startEl.hidden=true;
+  try{sessionStorage.setItem(inExamKey,sidNow())}catch{}
+  fitSheet();
 }
 
-render(false);
-syncWithServerSession();
-loadDefaultRegionsIfNeeded();
+let loginResolve=null;
+function showLogin(){
+  if(!loginEl.hidden)return new Promise(r=>{const prev=loginResolve;loginResolve=()=>{prev?.();r()}});
+  loginEl.hidden=false;
+  document.getElementById('loginErr').textContent='';
+  document.getElementById('loginPass').value='';
+  setTimeout(()=>document.getElementById(document.getElementById('loginUser').value?'loginPass':'loginUser').focus(),0);
+  return new Promise(r=>{loginResolve=r});
+}
+document.getElementById('loginForm').onsubmit=async e=>{
+  e.preventDefault();
+  const user=document.getElementById('loginUser').value.trim(),password=document.getElementById('loginPass').value,err=document.getElementById('loginErr');
+  err.textContent='';
+  try{
+    const res=await postJSON('/api/login',{user,password});
+    const d=await res.json().catch(()=>({}));
+    if(!res.ok){err.textContent=d.error||'Sign-in failed.';document.getElementById('loginPass').select();return}
+    signedInUser=d.user||user;
+    loginEl.hidden=true;
+    const r=loginResolve;loginResolve=null;r?.();
+    if(synced)persistSession(false); // re-sign-in mid-exam: resume the interrupted disk backup
+  }catch{err.textContent='Cannot reach the NeuroSense server. Is it still running?'}
+};
+document.getElementById('lockApp').onclick=async()=>{
+  await persistSession(false);
+  try{await postJSON('/api/logout')}catch{}
+  await showLogin();
+};
+
+const fmtTime=iso=>{const d=new Date(iso);return isNaN(d)?'':d.toLocaleString([],{dateStyle:'medium',timeStyle:'short'})};
+async function showStart(fromMenu=false){
+  const n=Object.keys(scores).length,m=getPatientMeta();
+  const resume=document.getElementById('resumeBtn');
+  resume.hidden=!(m.patientName||n);
+  document.getElementById('resumeTitle').textContent=fromMenu?'Back to current exam':'Continue exam'+(m.patientName?': '+m.patientName:'');
+  document.getElementById('resumeInfo').textContent=`${n} / 112 scored`+(m.examDate?' · exam '+m.examDate:'')+(m.examinerName?' · '+m.examinerName:'');
+  document.getElementById('newPatient').value='';
+  document.getElementById('newExaminer').value=signedInUser&&signedInUser!=='examiner'?signedInUser:(m.examinerName||'');
+  const now=new Date(),pad=x=>String(x).padStart(2,'0');
+  document.getElementById('newDate').value=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  document.getElementById('newOrder').value=document.getElementById('order').value;
+  const ports=serverInfo&&serverInfo.ports;
+  document.getElementById('hwInfo').textContent=!serverInfo?'Running without the NeuroSense server: scores are saved in this browser only.'
+    :ports===null?'Serial device detection unavailable.':ports.length?'Detected: '+ports.map(p=>p.device+' — '+p.description).join(', '):'No USB serial device detected. Plug in the receiver, or use the keyboard.';
+  startEl.hidden=false;
+  setTimeout(()=>document.getElementById(resume.hidden?'newPatient':'resumeBtn').focus(),0);
+  // Recent sessions (server only)
+  const wrap=document.getElementById('recentWrap'),list=document.getElementById('recent');
+  wrap.hidden=true;list.replaceChildren();
+  if(!hasServer)return;
+  try{
+    const res=await fetch('/api/sessions');if(!res.ok)return;
+    const d=await res.json(),current=localStorage.getItem('ns-sid');
+    const items=(d.sessions||[]).filter(s=>s.sessionId&&s.sessionId!==current).slice(0,12);
+    for(const s of items){
+      const b=document.createElement('button');b.type='button';
+      const name=document.createElement('b');name.textContent=s.patientName||'(no name)';
+      const meta=document.createElement('span');meta.textContent=`${s.scored}/112 · ${s.examDate||fmtTime(s.timestamp)}`;
+      b.append(name,meta);
+      b.onclick=()=>resumeSession(s.sessionId,s.patientName);
+      list.appendChild(b);
+    }
+    wrap.hidden=!items.length;
+  }catch{}
+}
+async function resumeSession(sid,name){
+  if(!confirm(`Open the saved exam for ${name||'this patient'}? The current exam stays saved.`))return;
+  try{
+    const res=await postJSON('/api/session/resume',{sessionId:sid});
+    if(!res.ok)throw Error('status '+res.status);
+    const data=await res.json();
+    localStorage.setItem('ns-sid',data.sessionId);
+    synced=true;
+    applySessionPayload(data);
+    persistSession(false);
+    enterExam();
+  }catch(err){alert('Could not open that session: '+err.message)}
+}
+document.getElementById('resumeBtn').onclick=enterExam;
+document.getElementById('newExam').onclick=()=>showStart(true);
+document.getElementById('newForm').onsubmit=async e=>{
+  e.preventDefault();
+  const dt=document.getElementById('newDate').value;
+  const meta={patientName:document.getElementById('newPatient').value.trim(),examinerName:document.getElementById('newExaminer').value.trim(),examDate:dt.replace('T',' ')};
+  const order=document.getElementById('newOrder').value;
+  let data={};
+  if(hasServer){
+    try{
+      const res=await postJSON('/api/session/new',meta);
+      if(res.status===401){await showLogin();return document.getElementById('newForm').requestSubmit()}
+      if(!res.ok)throw Error('status '+res.status);
+      data=await res.json();
+      localStorage.setItem('ns-sid',data.sessionId);
+      synced=true;
+    }catch(err){alert('Could not start a new exam on the NeuroSense server: '+err.message);return}
+  }
+  document.getElementById('order').value=order;
+  applySessionPayload({...data,patient:meta,scores:{},history:[],active:0,order});
+  active=sequence()[0];
+  lastVal.dataset.v='';lastVal.textContent='–';lastWhere.textContent='Nothing yet';
+  render();
+  enterExam();
+};
+
+document.getElementById('quitApp').onclick=async()=>{
+  if(!confirm('Quit NeuroSense? The exam is saved and can be continued later.'))return;
+  await persistSession(false);
+  while(saving)await new Promise(r=>setTimeout(r,50));
+  if(hasServer){try{await postJSON('/api/shutdown')}catch{}}
+  document.getElementById('closed').hidden=false;
+  window.close();
+};
+
+async function boot(){
+  applySettings();
+  render(false);
+  loadDefaultRegionsIfNeeded();
+  serverInfo=await fetchInfo();
+  hasServer=!!serverInfo;
+  document.getElementById('appVersion').textContent=serverInfo?serverInfo.version:'(browser only)';
+  document.getElementById('encInfo').textContent=serverInfo?(serverInfo.encrypted?'Disk backups are encrypted (Windows DPAPI).':'Disk backups are not encrypted on this system.'):'';
+  document.getElementById('quitApp').hidden=document.getElementById('lockApp').hidden=!hasServer;
+  if(hasServer&&!serverInfo.signedIn)await showLogin();
+  await syncWithServerSession();
+  let resumeTab=false;try{resumeTab=sessionStorage.getItem(inExamKey)===sidNow()}catch{}
+  if(resumeTab)enterExam();else showStart();
+}
+boot();
 </script></body></html>

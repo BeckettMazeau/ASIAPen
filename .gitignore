@@ -1,0 +1,3 @@
+# Patient session data, snapshots and logs
+neurosense_light_touch_first/backups/
+*.tmp

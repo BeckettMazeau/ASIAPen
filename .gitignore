@@ -1,3 +1,7 @@
 # Patient session data, snapshots and logs
 neurosense_light_touch_first/backups/
 *.tmp
+
+# PlatformIO build output
+neurosense_light_touch_first/firmware/.pio/
+neurosense_light_touch_first/firmware/.vscode/

@@ -1,6 +1,6 @@
 # Agent Instructions
 
-Repository for **ASIAPen / NeuroSense**, an interactive sensory examination tool implementing the ASIA ISNCSCI worksheet with SVG dermatome overlays, physical 4-button RF input via Arduino USB serial, and automated multi-tier session recovery.
+Repository for **ASIAPen / NeuroSense**, an interactive sensory examination tool implementing the ASIA ISNCSCI worksheet with SVG dermatome overlays, physical 4-button RF input via a BLE button box (Seeed XIAO ESP32C6; legacy Arduino USB serial still supported), and automated multi-tier session recovery.
 
 ## Project Structure
 All application code lives in `neurosense_light_touch_first/`. `start_exam.py` changes to its own directory at startup (`APP_DIR`, `sys._MEIPASS`-aware for a future PyInstaller build) and keeps data in `DATA_DIR/backups`, so it works from anywhere; run the static dev server from that directory.
@@ -10,7 +10,8 @@ All application code lives in `neurosense_light_touch_first/`. `start_exam.py` c
 - `neurosense_light_touch_first/neurosense-dermatome-regions.json` — Pre-calibrated polygon and testing-dot definitions for 28 spinal levels.
 - `neurosense_light_touch_first/NeuroSense.bat` — Double-click entry point: starts `start_exam.py` with `pythonw` (falls back to `pyw -3`), so no console stays open. Keep CRLF line endings.
 - `neurosense_light_touch_first/start_exam.py` — Local HTTP server (port 8000), sign-in, session API, DPAPI-encrypted backups and snapshots, optional pyserial port listing, Edge/Chrome app-window launcher.
-- `neurosense_light_touch_first/arduino-code.cpp` — Arduino sketch (paste into an `.ino`); 4-channel button/RF logger.
+- `neurosense_light_touch_first/arduino-code.cpp` — Legacy Arduino Due sketch (paste into an `.ino`); 4-channel button/RF logger over USB serial.
+- `neurosense_light_touch_first/firmware/` — PlatformIO project (pioarduino platform, Arduino core 3.x, NimBLE-Arduino) for the XIAO ESP32C6 BLE button box. Envs: `release` (default, no debug code), `debug` (`NS_DEBUG=1`), `debug_soak` (+ synthetic presses). One event-driven app task owns all state; the GPIO ISR and NimBLE callbacks only post to a static queue (`app.h`). `debug.{h,cpp}` is compiled out in release; find debug code with Ctrl+F `NS_DEBUG` / `DBG_`. BLE name is `NS-XXXX` (last 2 MAC bytes). UUIDs in `firmware/src/config.h` must match `NS_SVC`/`NS_CHR` in `index.html`.
 - `neurosense_light_touch_first/README.txt` — Examiner-facing setup and workflow guide.
 - `neurosense_light_touch_first/backups/` — Created at runtime, git-ignored (patient data): `autosave_latest.json`, `session_<sessionId>.json` (older builds wrote `session_<patient>_<sessionId>.json`; both are still read), `snapshots/<sessionId>/*.json`, `autosave_corrupt_*.json` copies of unreadable autosaves, `audit.log` (PHI-free events), `neurosense.log` (status output under pythonw).
 - `state/` (repo root) — Empty, unused.
@@ -24,7 +25,8 @@ All application code lives in `neurosense_light_touch_first/`. `start_exam.py` c
 - **Settings** (`neurosense-settings-v1` in localStorage, per viewer, not in the session): flash on/off and duration, palette, score size, auto-advance, dermatome highlight, calibration mode (shows the `#calibBar` outline tools).
 - **Test order** (`#order` select in Settings, persisted in the session): `lt` (default, "All Light Touch → All Pin Prick": R-LT, L-LT, R-PP, L-PP), `columns`, `row` (per level R-LT → R-PP → L-LT → L-PP), `pp` (pin prick first). Order is built by `sequence()`. An "advance" checkbox controls auto-advance after each score, skipping already-filled cells.
 - **Outline tool modes**: View only, Move selected region, Move testing dot, Edit corners, Draw new region. Regions are validated by `validPolygon` (3–300 points, coordinates within 0–1311).
-- **Serial Input**:
+- **BLE Input (primary)**: Web Bluetooth, filter `{services:[NS_SVC], namePrefix:'NS-'}`; Notify characteristic `NS_CHR` carries the same ASCII commands (`0`/`1`/`2`/`UNDO`) and goes through `handleSerialLine`. The chosen device is remembered in `neurosense-ble-device-v1` (localStorage); `getDevices()` restores it, `gattserverdisconnected` starts a backoff retry loop (1→3 s), and `watchAdvertisements()` reconnects immediately when a sleeping box wakes. Click the device pill = BLE, Shift+click = USB serial.
+- **Serial Input (legacy USB)**:
   - Web Serial API, 115200 baud, newline-delimited lines.
   - Accepted line format: `/^(?:SCORE\s*[:=]\s*|BTN\s*[:=]\s*)?([012]|UNDO|DEL|DELETE)$/i`.
   - `0`/`1`/`2` record a score and advance; `UNDO`/`DEL`/`DELETE` pop `history`, restore the prior value, and refocus that cell. `history` is capped at 500 entries.

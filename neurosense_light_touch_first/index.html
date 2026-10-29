@@ -691,7 +691,8 @@ document.getElementById('csv').onclick=()=>{
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
 
-// Web Serial API connection + 4-button support (0, 1, 2, UNDO/DEL) + Auto-reconnect on USB replug
+// Device input: Web Bluetooth (primary) and Web Serial (legacy USB). 4 buttons: 0, 1, 2, UNDO/DEL.
+// Both reconnect by themselves (USB replug / BLE retry loop).
 const deviceEl=document.getElementById('connect'),connText=document.getElementById('connection');
 function setDevice(state,text){deviceEl.dataset.state=state;connText.textContent=text}
 let isReadingSerial=false;
@@ -740,7 +741,7 @@ function handleSerialLine(msg){
   }
 }
 
-deviceEl.onclick=async()=>{
+async function connectSerial(){
   if(isReadingSerial)return;
   if(!('serial' in navigator)){
     setDevice('err','USB input needs Chrome or Edge');
@@ -753,9 +754,90 @@ deviceEl.onclick=async()=>{
     if(err.name==='NotFoundError')setDevice('idle','No device · click to connect');
     else setDevice('err','Device: '+err.message);
   }
-};
+}
 
-// Auto-connect to previously authorized Arduino on page load or when USB cable is plugged back in
+// Web Bluetooth: NS-XXXX button box (XIAO ESP32C6). Same ASCII commands as the USB serial
+// device, so lines go through handleSerialLine. UUIDs must match firmware/src/config.h.
+const NS_SVC='4e535301-7a3c-4b1e-9d52-0c6f9a1e2b00',NS_CHR='4e535302-7a3c-4b1e-9d52-0c6f9a1e2b00',bleKey='neurosense-ble-device-v1';
+let bleDev=null,bleChr=null,bleWant=false,bleBusy=false,bleTimer=0,bleDelay=1000,bleWatching=false;
+const bleName=()=>bleDev&&bleDev.name?bleDev.name:'device';
+function bleSaved(){try{return JSON.parse(localStorage.getItem(bleKey)||'null')}catch{return null}}
+function bleRemember(d){try{localStorage.setItem(bleKey,JSON.stringify({id:d.id,name:d.name}))}catch{}}
+function onBleValue(ev){
+  try{handleSerialLine(new TextDecoder().decode(ev.target.value).trim())}catch{}
+}
+async function bleConnectOnce(){
+  if(bleBusy||!bleDev||!bleWant)return false;
+  bleBusy=true;
+  try{
+    setDevice('wait','Connecting to '+bleName()+'…');
+    const server=await bleDev.gatt.connect();
+    const svc=await server.getPrimaryService(NS_SVC);
+    bleChr=await svc.getCharacteristic(NS_CHR);
+    bleChr.addEventListener('characteristicvaluechanged',onBleValue);
+    await bleChr.startNotifications();
+    bleDelay=1000;
+    setDevice('ok','Connected · '+bleName());
+    return true;
+  }catch{
+    try{bleDev.gatt.disconnect()}catch{}
+    return false;
+  }finally{bleBusy=false}
+}
+function bleRetry(){ // keep trying while the page is open; a sleeping/out-of-range device just fails quietly
+  clearTimeout(bleTimer);
+  if(!bleWant||!bleDev)return;
+  setDevice('wait','Reconnecting to '+bleName()+'…');
+  bleTimer=setTimeout(async()=>{
+    if(!bleWant)return;
+    if(!(await bleConnectOnce())){bleDelay=Math.min(bleDelay*2,3000);bleRetry()}
+  },bleDelay);
+}
+function onBleDrop(){if(bleWant){bleDelay=1000;bleRetry()}}
+function onBleAdvert(){ // device is advertising again (e.g. woke from deep sleep): connect now
+  if(!bleWant||bleBusy||!bleDev||bleDev.gatt.connected)return;
+  clearTimeout(bleTimer);
+  bleConnectOnce().then(ok=>{if(!ok)bleRetry()});
+}
+function useBleDevice(d){
+  if(bleDev&&bleDev!==d){bleWant=false;try{bleDev.gatt.disconnect()}catch{}}
+  bleDev=d;bleWant=true;bleRemember(d);
+  d.addEventListener('gattserverdisconnected',onBleDrop);
+  if(d.watchAdvertisements&&!bleWatching){
+    bleWatching=true;
+    d.addEventListener('advertisementreceived',onBleAdvert);
+    d.watchAdvertisements().catch(()=>{});
+  }
+}
+async function connectBle(){
+  if(bleBusy)return;
+  try{
+    const d=await navigator.bluetooth.requestDevice({filters:[{services:[NS_SVC],namePrefix:'NS-'}]});
+    useBleDevice(d);
+    if(!(await bleConnectOnce()))bleRetry();
+  }catch(err){
+    if(err.name==='NotFoundError')setDevice(bleDev&&bleWant?'wait':'idle',bleDev&&bleWant?'Reconnecting to '+bleName()+'…':'No device · click to connect');
+    else setDevice('err','Device: '+err.message);
+  }
+}
+
+// Click: Bluetooth box (pick the NS-XXXX code printed on it). Shift+click: USB serial (older Arduino box).
+deviceEl.onclick=ev=>{
+  if(ev.shiftKey||!('bluetooth' in navigator))return connectSerial();
+  return connectBle();
+};
+if('bluetooth' in navigator){
+  setDevice('idle','No device · click to connect');
+  const saved=bleSaved();
+  if(saved&&navigator.bluetooth.getDevices){ // restore the previously chosen box without a click, when the browser allows
+    navigator.bluetooth.getDevices().then(ds=>{
+      const d=ds.find(x=>x.id===saved.id);
+      if(d){useBleDevice(d);bleConnectOnce().then(ok=>{if(!ok)bleRetry()})}
+    }).catch(()=>{});
+  }
+}
+
+// Auto-connect to previously authorized USB serial device on page load or when USB cable is plugged back in
 if('serial' in navigator){
   setDevice('idle','No device · click to connect');
   navigator.serial.addEventListener('connect',async e=>{
